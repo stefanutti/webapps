@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="dark">
+<meta name="description" content="A collection of interactive projects: a Four Color Theorem visualization growing on a sphere, an Aikido technique catalog, and more.">
+<title>Projects · Interactive Experiments</title>
+<style>
+  :root{
+    --bg:#0d1017;
+    --bg-2:#141924;
+    --card:#161c28;
+    --ink:#eef2f6;
+    --ink-2:#9aa6b6;
+    --ink-3:#66707f;
+    --line:rgba(200,214,230,.12);
+    --line-2:rgba(200,214,230,.22);
+    --sea:#5fb6cf;
+    --clay:#e0704a;
+    --leaf:#7fb87a;
+    --serif:Georgia,"Times New Roman",serif;
+    --sans:-apple-system,BlinkMacSystemFont,"Segoe UI",system-ui,"Helvetica Neue",Arial,sans-serif;
+    --mono:ui-monospace,SFMono-Regular,"SF Mono",Menlo,Consolas,monospace;
+  }
+  *,*::before,*::after{box-sizing:border-box}
+  html{-webkit-text-size-adjust:100%}
+  body{
+    margin:0;min-height:100vh;background:var(--bg);color:var(--ink);
+    font-family:var(--sans);line-height:1.5;-webkit-font-smoothing:antialiased;
+    display:flex;flex-direction:column;
+    background-image:radial-gradient(1200px 600px at 50% -10%, #182234 0%, transparent 60%);
+  }
+  a{color:inherit;text-decoration:none}
+  :focus-visible{outline:2px solid var(--sea);outline-offset:3px;border-radius:8px}
+
+  .wrap{width:100%;max-width:1100px;margin:0 auto;padding:clamp(28px,6vw,72px) clamp(20px,4vw,32px);flex:1;display:flex;flex-direction:column}
+
+  header{margin-bottom:clamp(28px,5vw,52px)}
+  .eyebrow{font-family:var(--mono);font-size:11px;letter-spacing:.28em;color:var(--ink-3);text-transform:uppercase}
+  h1{font-family:var(--serif);font-weight:400;font-size:clamp(32px,6vw,52px);line-height:1.1;margin:12px 0 0;letter-spacing:.01em;text-wrap:balance}
+  .lede{color:var(--ink-2);font-size:clamp(15px,2.2vw,17px);margin-top:16px;max-width:58ch;text-wrap:pretty}
+
+  /* Auto-fitting grid: cards flow into as many columns as fit, so new
+     entries can simply be appended without touching the layout. */
+  .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:clamp(18px,3vw,26px)}
+
+  .card{
+    position:relative;display:flex;flex-direction:column;
+    background:var(--card);border:1px solid var(--line);border-radius:18px;overflow:hidden;
+    transition:transform .35s cubic-bezier(.4,0,.2,1),border-color .35s,box-shadow .35s;
+    box-shadow:0 1px 2px rgba(0,0,0,.3);
+  }
+  .card:hover{transform:translateY(-6px);border-color:var(--line-2);box-shadow:0 30px 60px -30px rgba(0,0,0,.8)}
+  .card:focus-within{border-color:var(--line-2)}
+
+  .thumb{position:relative;aspect-ratio:16/10;overflow:hidden;background:var(--bg-2)}
+  .thumb img{width:100%;height:100%;object-fit:cover;display:block;transition:transform .5s cubic-bezier(.4,0,.2,1);opacity:.94}
+  .card:hover .thumb img{transform:scale(1.05)}
+  .thumb::after{content:"";position:absolute;inset:0;background:linear-gradient(to top,rgba(13,16,23,.55),transparent 55%)}
+
+  .body{padding:22px 22px 24px;display:flex;flex-direction:column;gap:10px;flex:1}
+  .tag{font-family:var(--mono);font-size:10.5px;letter-spacing:.2em;text-transform:uppercase;display:inline-flex;align-items:center;gap:8px}
+  .card--sea .tag{color:var(--sea)}
+  .card--clay .tag{color:var(--clay)}
+  .card--leaf .tag{color:var(--leaf)}
+  .ext{font-size:9.5px;letter-spacing:.14em;color:var(--ink-3);border:1px solid var(--line);border-radius:999px;padding:2px 7px}
+  .card h2{font-family:var(--serif);font-weight:400;font-size:24px;margin:0;letter-spacing:.01em}
+  .card p{color:var(--ink-2);font-size:14.5px;margin:0;text-wrap:pretty}
+  .cta{margin-top:auto;padding-top:14px;display:inline-flex;align-items:center;gap:8px;font-size:13.5px;color:var(--ink);letter-spacing:.02em}
+  .cta .arrow{transition:transform .3s cubic-bezier(.4,0,.2,1)}
+  .card:hover .cta .arrow{transform:translateX(4px)}
+  .card--sea .cta{color:var(--sea)}
+  .card--clay .cta{color:var(--clay)}
+  .card--leaf .cta{color:var(--leaf)}
+
+  /* Make the whole card clickable via the stretched link */
+  .stretched::after{content:"";position:absolute;inset:0;z-index:1}
+
+  footer{margin-top:clamp(32px,5vw,56px);padding-top:20px;border-top:1px solid var(--line);color:var(--ink-3);font-size:12.5px;font-family:var(--mono);letter-spacing:.04em}
+</style>
+</head>
+<body>
+  <div class="wrap">
+    <header>
+      <p class="eyebrow">Project collection</p>
+      <h1>Interactive experiments</h1>
+      <p class="lede">Pick where to dive in.</p>
+    </header>
+
+    <main class="grid">
+      <article class="card card--leaf">
+        <div class="thumb">
+          <img src="assets/thumb-four-color.png" alt="A historical map of Königsberg with the river Pregel and its seven bridges highlighted in yellow — the Seven Bridges of Königsberg.">
+        </div>
+        <div class="body">
+          <span class="tag">Mathematics · Reference <span class="ext">External</span></span>
+          <h2>Four Color Theorem</h2>
+          <p>The companion site with the full background, history, and proof narrative behind the four-coloring of planar maps.</p>
+          <a class="cta stretched" href="https://four-color-theorem.com" target="_blank" rel="noopener noreferrer">
+            Visit four-color-theorem.com
+            <span class="arrow" aria-hidden="true">&rarr;</span>
+          </a>
+        </div>
+      </article>
+
+      <article class="card card--sea">
+        <div class="thumb">
+          <img src="assets/thumb-waterworld.png" alt="A sphere covered by a planar map of colored regions, in the style of the Four Color Theorem.">
+        </div>
+        <div class="body">
+          <span class="tag">Mathematics · Visualization</span>
+          <h2>Waterworld Colonization</h2>
+          <p>Watch a cubic planar map grow, region by region, across a globe — a visual proof of the invariant behind the Four Color Theorem.</p>
+          <a class="cta stretched" href="waterworld-colonization.html">
+            Open the visualization
+            <span class="arrow" aria-hidden="true">&rarr;</span>
+          </a>
+        </div>
+      </article>
+
+      <article class="card card--clay">
+        <div class="thumb">
+          <img src="assets/thumb-aikido.png" alt="Sumi-e illustration of two Aikido practitioners on warm cream paper with a vermilion brushstroke.">
+        </div>
+        <div class="body">
+          <span class="tag">Martial arts · Catalog</span>
+          <h2>合気道 · Aikido</h2>
+          <p>An interactive catalog of the techniques in the ProgettoAiki Dan exam syllabus, organized by category with reference videos.</p>
+          <a class="cta stretched" href="aikido.html">
+            Browse the techniques
+            <span class="arrow" aria-hidden="true">&rarr;</span>
+          </a>
+        </div>
+      </article>
+
+    </main>
+
+    <footer>Static projects · no dependencies</footer>
+  </div>
+</body>
+</html>

@@ -1,0 +1,1085 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="light dark">
+<meta name="description" content="Catalogo interattivo delle tecniche di Aikido del programma esami Dan ProgettoAiki, con video di riferimento.">
+<title>合気道 · Aikido Techniques</title>
+<script>
+/* Applica il tema prima del primo paint per evitare il flash */
+(function(){try{var t=localStorage.getItem("aikido.theme");
+if(t!=="light"&&t!=="dark"){t=matchMedia("(prefers-color-scheme: dark)").matches?"dark":"light";}
+document.documentElement.dataset.theme=t;}catch(e){document.documentElement.dataset.theme="light";}})();
+</script>
+<style>
+/* ============================= Design tokens ============================= */
+:root{
+  --serif:"Hiragino Mincho ProN","Yu Mincho","Songti SC","Noto Serif JP",Georgia,"Times New Roman",serif;
+  --sans:-apple-system,BlinkMacSystemFont,"Segoe UI",system-ui,"Helvetica Neue",Arial,sans-serif;
+  --mono:ui-monospace,SFMono-Regular,"SF Mono",Menlo,monospace;
+  --radius:16px;
+  --content-width:840px;
+  --page-gutter:clamp(12px,3vw,34px);
+  --ease:cubic-bezier(.4,0,.2,1);
+}
+:root[data-theme="light"]{
+  --bg:#f5f2ea; --bg-2:#ece7db; --card:#fffdf8; --panel:#fffdf8f2;
+  --ink:#17150f; --ink-2:#635b4c; --ink-3:#918876;
+  --line:#e1d9c8; --line-2:#cec4ae;
+  --accent:#a9341a; --indigo:#33477a;
+  --shadow:0 1px 2px rgba(30,24,10,.05),0 10px 26px -16px rgba(30,24,10,.22);
+  --shadow-lg:0 30px 70px -22px rgba(20,15,5,.5);
+  --c-suwari:#7a5f2f; --c-hanmi:#436b53; --c-tachi:#33477a; --c-ushiro:#75374d;
+  --c-futari:#3a6272; --c-randori:#7b5019; --c-tanto:#a33a1c;
+  --thumb-bg:#e6e0d2;
+}
+:root[data-theme="dark"]{
+  --bg:#12110e; --bg-2:#1a1815; --card:#1c1a16; --panel:#16151199;
+  --ink:#f2ede2; --ink-2:#a49c8b; --ink-3:#7d7566;
+  --line:#2f2b24; --line-2:#443e33;
+  --accent:#e8724a; --indigo:#8ba6d6;
+  --shadow:0 1px 2px rgba(0,0,0,.4),0 12px 30px -18px rgba(0,0,0,.8);
+  --shadow-lg:0 30px 80px -20px rgba(0,0,0,.85);
+  --c-suwari:#cfa661; --c-hanmi:#84bd9b; --c-tachi:#8ba6d6; --c-ushiro:#d495a8;
+  --c-futari:#7fb2c6; --c-randori:#d4a55e; --c-tanto:#ef8261;
+  --thumb-bg:#211e19;
+}
+
+*,*::before,*::after{box-sizing:border-box}
+[hidden]{display:none!important}
+html{-webkit-text-size-adjust:100%}
+body{
+  margin:0;background:var(--bg);color:var(--ink);
+  font-family:var(--sans);font-size:16px;line-height:1.5;
+  -webkit-font-smoothing:antialiased;
+  overflow-x:hidden;
+}
+:where(button,input,select,a){font-family:inherit}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:6px}
+::selection{background:color-mix(in srgb,var(--accent) 26%,transparent)}
+.wrap{max-width:calc(var(--content-width) + (2 * var(--page-gutter)));margin:0 auto;
+  padding-inline:var(--page-gutter)}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap}
+
+/* ================================= Hero ================================= */
+.hero{position:relative;overflow:hidden;border-bottom:1px solid var(--line);
+  background:
+    radial-gradient(120% 140% at 88% -20%, color-mix(in srgb,var(--accent) 11%,transparent), transparent 60%),
+    linear-gradient(180deg,var(--bg-2),var(--bg));}
+.hero .wrap{position:relative;padding-top:clamp(28px,5vw,54px);padding-bottom:clamp(24px,4vw,40px)}
+.enso{position:absolute;right:-40px;top:-70px;width:min(430px,52vw);height:auto;
+  color:var(--accent);opacity:.09;pointer-events:none}
+:root[data-theme="dark"] .enso{opacity:.14}
+.hero-top{display:flex;align-items:flex-start;justify-content:space-between;gap:20px}
+.kanji{font-family:var(--serif);font-size:clamp(2.6rem,7vw,4.2rem);line-height:1;
+  letter-spacing:.06em;margin:0 0 6px;font-weight:600}
+h1{font-size:clamp(1.05rem,2.3vw,1.5rem);font-weight:600;letter-spacing:-.01em;margin:0}
+.sub{margin:6px 0 0;color:var(--ink-2);font-size:.95rem}
+.sub a{color:var(--ink-2);text-decoration-color:var(--line-2);text-underline-offset:3px}
+.sub a:hover{color:var(--accent)}
+.stats{display:flex;gap:clamp(20px,4vw,44px);margin-top:clamp(20px,3.4vw,32px);flex-wrap:wrap}
+.stat b{display:block;font-family:var(--serif);font-size:clamp(1.5rem,3.4vw,2.1rem);
+  font-weight:600;line-height:1;font-variant-numeric:tabular-nums}
+.stat span{display:block;margin-top:5px;font-size:.7rem;text-transform:uppercase;
+  letter-spacing:.14em;color:var(--ink-3);font-weight:600}
+.hero-actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:clamp(20px,3vw,28px)}
+
+/* =============================== Controls =============================== */
+.btn{display:inline-flex;align-items:center;gap:8px;padding:9px 15px;border-radius:11px;
+  border:1px solid var(--line-2);background:var(--card);color:var(--ink);
+  font-size:.88rem;font-weight:600;cursor:pointer;transition:all .16s var(--ease);
+  text-decoration:none;white-space:nowrap}
+.btn:hover{border-color:var(--ink-3);transform:translateY(-1px)}
+.btn:active{transform:none}
+.btn svg{width:15px;height:15px;flex:none}
+.btn-accent{background:var(--accent);border-color:var(--accent);color:#fff}
+.btn-accent:hover{border-color:var(--accent);filter:brightness(1.08)}
+.btn-ghost{background:transparent;border-color:transparent;color:var(--ink-2);font-weight:500}
+.btn-ghost:hover{background:var(--bg-2);border-color:var(--line);color:var(--ink)}
+.icon-btn{width:38px;height:38px;padding:0;justify-content:center;border-radius:11px;flex:none}
+.icon-btn svg{width:17px;height:17px}
+
+.toolbar{position:sticky;top:0;z-index:40;background:var(--panel);
+  backdrop-filter:blur(14px) saturate(1.6);-webkit-backdrop-filter:blur(14px) saturate(1.6);
+  border-bottom:1px solid var(--line)}
+.toolbar .wrap{padding-top:11px;padding-bottom:11px;display:flex;flex-direction:column;gap:10px;
+  align-items:stretch}
+.toolbar-row{display:flex;align-items:center;gap:10px;flex-wrap:wrap;width:100%;
+  justify-content:flex-start}
+.toolbar-row.search-row{flex-wrap:nowrap}
+.search{position:relative;flex:1 1 auto;min-width:0;display:flex;align-items:center}
+.search svg{position:absolute;left:12px;width:16px;height:16px;color:var(--ink-3);pointer-events:none}
+.search input{width:100%;padding:10px 36px 10px 36px;border-radius:11px;
+  border:1px solid var(--line-2);background:var(--card);color:var(--ink);font-size:.92rem}
+.search input::-webkit-search-cancel-button{display:none}
+.search input:focus{outline:none;border-color:var(--accent);
+  box-shadow:0 0 0 3px color-mix(in srgb,var(--accent) 15%,transparent)}
+.search .x{position:absolute;right:6px;width:26px;height:26px;border:0;border-radius:50%;
+  background:transparent;color:var(--ink-3);cursor:pointer;font-size:17px;line-height:1;
+  display:grid;place-items:center}
+.search .x:hover{background:var(--bg-2);color:var(--ink)}
+.filter-control{display:flex;flex-direction:column;gap:4px;min-width:0}
+.filter-control label{font-size:.68rem;text-transform:uppercase;letter-spacing:.13em;
+  color:var(--ink-3);font-weight:700}
+.filter-control.multi{position:relative;flex:1 1 300px}
+.filter-control.grade{flex:0 1 240px}
+.filter-control select{min-width:210px;max-width:100%;padding:10px 36px 10px 12px;border-radius:11px;
+  border:1px solid var(--line-2);background:var(--card);color:var(--ink);font-size:.9rem;
+  appearance:none;-webkit-appearance:none;
+  background-image:
+    linear-gradient(45deg,transparent 50%,var(--ink-3) 50%),
+    linear-gradient(135deg,var(--ink-3) 50%,transparent 50%);
+  background-position:
+    calc(100% - 18px) calc(50% - 2px),
+    calc(100% - 12px) calc(50% - 2px);
+  background-size:6px 6px,6px 6px;
+  background-repeat:no-repeat}
+.filter-control select:focus{outline:none;border-color:var(--accent);
+  box-shadow:0 0 0 3px color-mix(in srgb,var(--accent) 15%,transparent)}
+.multi-trigger{width:100%;min-height:44px;padding:10px 42px 10px 12px;border-radius:11px;
+  border:1px solid var(--line-2);background:var(--card);color:var(--ink);font-size:.9rem;
+  text-align:left;cursor:pointer;position:relative}
+.multi-trigger:hover{border-color:var(--ink-3)}
+.multi-trigger::after{content:"";position:absolute;right:16px;top:50%;
+  width:10px;height:10px;border-right:2px solid var(--ink-3);border-bottom:2px solid var(--ink-3);
+  transform:translateY(-65%) rotate(45deg)}
+.multi-trigger.open::after{transform:translateY(-35%) rotate(-135deg)}
+.multi-summary{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.multi-panel{position:absolute;left:0;right:0;top:calc(100% + 6px);z-index:50;padding:8px;
+  border:1px solid var(--line-2);border-radius:14px;background:var(--card);box-shadow:var(--shadow);
+  display:grid;gap:4px;max-height:320px;overflow:auto}
+.multi-option{display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:10px;
+  cursor:pointer;color:var(--ink)}
+.multi-option:hover{background:var(--bg-2)}
+.multi-option input{margin:0;accent-color:var(--accent)}
+.multi-actions{display:flex;gap:8px;padding:4px 2px 0}
+.multi-actions button{border:0;background:transparent;color:var(--accent);font-size:.78rem;
+  font-weight:700;cursor:pointer;padding:4px 0}
+.multi-actions button:hover{text-decoration:underline}
+.count{font-size:.82rem;color:var(--ink-2);font-variant-numeric:tabular-nums;white-space:nowrap}
+.count b{color:var(--ink);font-weight:700}
+.filter-row{display:grid;grid-template-columns:minmax(260px,1fr) minmax(190px,240px) auto auto;
+  align-items:end}
+.filter-row .filter-control.multi,.filter-row .filter-control.grade{width:100%}
+.filter-row .filter-control.grade{justify-self:stretch}
+.filter-row #resetBtn{justify-self:start}
+.filter-row #count{justify-self:end;align-self:center}
+.random-row{align-items:flex-start}
+.random-row .btn-accent{flex:none}
+.random-row .pick{flex:1 1 320px;min-width:0}
+
+/* ============================= Pick banner ============================= */
+.pick{display:flex;align-items:center;gap:12px;flex-wrap:wrap;
+  padding:10px 12px;border-radius:12px;border:1px solid color-mix(in srgb,var(--accent) 34%,transparent);
+  background:color-mix(in srgb,var(--accent) 9%,var(--card));animation:slideIn .22s var(--ease)}
+@keyframes slideIn{from{opacity:0;transform:translateY(-6px)}to{opacity:1;transform:none}}
+.pick .dice{font-size:1.25rem;line-height:1;color:var(--accent)}
+.pick-text{flex:1 1 200px;min-width:0}
+.pick-text span{display:block;font-size:.66rem;text-transform:uppercase;letter-spacing:.14em;
+  color:var(--accent);font-weight:700}
+.pick-text strong{display:block;font-family:var(--serif);font-size:1.12rem;font-weight:600;
+  line-height:1.25;margin-top:2px}
+.pick .btn{padding:7px 12px;font-size:.83rem}
+
+/* ============================== Catalogo ============================== */
+main.wrap{padding-top:clamp(20px,3vw,32px);padding-bottom:60px}
+
+.cat-section{--c:var(--ink-2);margin-top:64px}
+.cat-section:first-child{margin-top:0}
+.cat-section.hide{display:none}
+.cat-section.cat-suwari{--c:var(--c-suwari)} .cat-section.cat-hanmi{--c:var(--c-hanmi)}
+.cat-section.cat-tachi{--c:var(--c-tachi)}  .cat-section.cat-ushiro{--c:var(--c-ushiro)}
+.cat-section.cat-futari{--c:var(--c-futari)}.cat-section.cat-randori{--c:var(--c-randori)}
+.cat-section.cat-tanto{--c:var(--c-tanto)}
+.cat-head{display:flex;align-items:center;gap:12px;font-family:var(--serif);
+  font-size:clamp(1.5rem,2.6vw,1.95rem);font-weight:600;color:var(--ink);
+  margin:0 0 26px;padding-bottom:14px;border-bottom:2px solid var(--c)}
+.cat-head i{width:10px;height:10px;border-radius:50%;background:var(--c);flex:none}
+
+.attack-group{margin-top:36px}
+.attack-group:first-of-type{margin-top:0}
+.attack-group.hide{display:none}
+.attack-head{font-size:.76rem;font-weight:700;letter-spacing:.13em;text-transform:uppercase;
+  color:var(--c);margin:0 0 14px}
+
+.cards{display:grid;gap:clamp(18px,2.2vw,26px);grid-template-columns:1fr}
+
+.card{--c:var(--ink-2);background:var(--card);border:1px solid var(--line);
+  border-radius:20px;padding:22px 22px 20px;display:flex;flex-direction:column;gap:10px;
+  min-width:0;max-width:840px;box-shadow:var(--shadow);transition:border-color .18s var(--ease),transform .18s var(--ease),box-shadow .18s var(--ease);
+  scroll-margin-top:230px}
+.card:hover{transform:translateY(-2px);border-color:color-mix(in srgb,var(--c) 38%,var(--line))}
+.card.hide{display:none}
+.card.cat-suwari{--c:var(--c-suwari)} .card.cat-hanmi{--c:var(--c-hanmi)}
+.card.cat-tachi{--c:var(--c-tachi)}  .card.cat-ushiro{--c:var(--c-ushiro)}
+.card.cat-futari{--c:var(--c-futari)}.card.cat-randori{--c:var(--c-randori)}
+.card.cat-tanto{--c:var(--c-tanto)}
+
+.card-top{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.cat{display:inline-flex;align-items:center;gap:6px;font-size:.72rem;font-weight:700;
+  letter-spacing:.11em;text-transform:uppercase;color:var(--c)}
+.cat i{width:6px;height:6px;border-radius:50%;background:currentColor;flex:none}
+.gs{display:flex;gap:5px;flex-wrap:wrap;margin-left:auto}
+.g-tag{font-size:.7rem;font-weight:800;padding:3px 7px;border-radius:6px;letter-spacing:.03em;
+  font-variant-numeric:tabular-nums;font-family:var(--mono)}
+.g-kyu{color:var(--indigo);background:color-mix(in srgb,var(--indigo) 13%,transparent)}
+.g-dan{color:var(--accent);background:color-mix(in srgb,var(--accent) 13%,transparent)}
+.attack{font-size:.76rem;font-weight:700;letter-spacing:.09em;text-transform:uppercase;color:var(--ink-3)}
+.attack-row{display:flex;align-items:baseline;gap:12px;min-width:0}
+.attack-row .attack{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;line-height:1}
+.tech{font-family:var(--serif);font-size:clamp(1.7rem,2.6vw,2.1rem);font-weight:600;
+  line-height:1.2;margin:0;letter-spacing:-.005em;
+  display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;overflow:hidden;min-width:0}
+
+.video-total{margin-left:auto;flex:none;color:var(--ink-3);
+  font:700 .72rem/1 var(--mono);letter-spacing:.04em;white-space:nowrap}
+.videos{display:flex;gap:16px;overflow-x:auto;padding-bottom:12px;margin-top:0;min-width:0;
+  scroll-snap-type:x mandatory;scrollbar-width:auto;
+  scrollbar-color:var(--c) color-mix(in srgb,var(--line-2) 62%,transparent)}
+.videos::-webkit-scrollbar{height:12px}
+.videos::-webkit-scrollbar-track{background:color-mix(in srgb,var(--line-2) 62%,transparent);border-radius:999px}
+.videos::-webkit-scrollbar-thumb{background:var(--c);border:2px solid var(--card);border-radius:999px}
+.video{flex:0 0 380px;scroll-snap-align:start;display:flex;flex-direction:column;gap:8px}
+.thumb{position:relative;aspect-ratio:16/9;border-radius:14px;overflow:hidden;
+  background:var(--thumb-bg);border:1px solid var(--line);display:block}
+.thumb img{width:100%;height:100%;object-fit:cover;display:block;
+  transition:transform .35s var(--ease),filter .2s}
+.thumb iframe{position:absolute;inset:0;width:100%;height:100%;border:0;z-index:1}
+.play{position:absolute;inset:0;z-index:1;display:grid;place-items:center;border:0;padding:0;cursor:pointer;
+  background:linear-gradient(180deg,transparent 45%,rgba(10,8,4,.35))}
+.play i{width:50px;height:50px;border-radius:50%;display:grid;place-items:center;
+  background:rgba(16,12,8,.55);border:1px solid rgba(255,255,255,.35);
+  backdrop-filter:blur(3px);transition:all .18s var(--ease)}
+.play svg{width:16px;height:16px;color:#fff;margin-left:2px}
+.expand,.stop{position:absolute;top:8px;right:8px;z-index:2;width:30px;height:30px;border-radius:50%;
+  border:1px solid rgba(255,255,255,.35);background:rgba(16,12,8,.6);color:#fff;cursor:pointer;
+  display:grid;place-items:center;backdrop-filter:blur(3px);transition:all .15s var(--ease);padding:0}
+.expand{opacity:.8}
+.expand svg{width:14px;height:14px}
+.stop{font-size:20px;line-height:1}
+@media (hover:hover){
+  .video:hover .thumb img{transform:scale(1.045)}
+  .thumb:hover .play i{background:var(--accent);border-color:var(--accent);transform:scale(1.08)}
+  .thumb:hover .expand{opacity:1}
+  .expand:hover,.stop:hover{background:var(--accent);border-color:var(--accent)}
+}
+.thumb.missing{display:grid;place-items:center;border-style:dashed}
+.thumb.missing span{font-size:.72rem;color:var(--ink-3);font-weight:600;text-align:center;padding:0 8px}
+.vmeta{display:flex;align-items:baseline;gap:6px;flex-wrap:wrap;font-size:.78rem;line-height:1.3}
+.by{font-weight:600;color:var(--ink-2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:100%}
+.role{font-size:.68rem;font-weight:700;letter-spacing:.05em;text-transform:uppercase;
+  color:var(--c);background:color-mix(in srgb,var(--c) 12%,transparent);padding:1px 6px;border-radius:4px;flex:none}
+.note{width:100%;font-size:.72rem;font-style:italic;color:var(--ink-3);
+  display:flex;gap:4px;align-items:baseline}
+.note::before{content:"⚠";font-style:normal;opacity:.7}
+
+@keyframes ring{0%{box-shadow:0 0 0 0 color-mix(in srgb,var(--accent) 60%,transparent)}
+  60%{box-shadow:0 0 0 13px transparent}100%{box-shadow:0 0 0 0 transparent}}
+.card.flash{animation:ring 1.5s var(--ease);border-color:var(--accent)}
+
+.empty{text-align:center;padding:70px 20px;color:var(--ink-2)}
+.empty .k{font-family:var(--serif);font-size:3rem;opacity:.18;display:block;margin-bottom:10px}
+.empty p{margin:0 0 16px;font-size:1.02rem}
+
+/* ============================== Lightbox ============================== */
+.lb{position:fixed;inset:0;z-index:100;display:grid;place-items:center;padding:clamp(10px,3vw,34px)}
+.lb[hidden]{display:none}
+.lb-bd{position:absolute;inset:0;background:rgba(10,8,5,.78);
+  backdrop-filter:blur(7px);-webkit-backdrop-filter:blur(7px);border:0;padding:0;cursor:zoom-out;
+  animation:fade .2s var(--ease)}
+@keyframes fade{from{opacity:0}to{opacity:1}}
+@keyframes pop{from{opacity:0;transform:scale(.97) translateY(8px)}to{opacity:1;transform:none}}
+.lb-panel{position:relative;width:min(1140px,100%);max-height:100%;overflow:auto;
+  background:var(--card);border:1px solid var(--line-2);border-radius:18px;
+  box-shadow:var(--shadow-lg);animation:pop .24s var(--ease)}
+.lb-head{display:flex;align-items:flex-start;gap:14px;padding:15px 16px 12px}
+.lb-head .attack{margin-bottom:1px}
+.lb-tech{font-family:var(--serif);font-size:1.42rem;font-weight:600;line-height:1.15;margin:0}
+.lb-cat{margin-top:6px}
+.lb-frame{aspect-ratio:16/9;background:#000;position:relative}
+.lb-frame iframe{position:absolute;inset:0;width:100%;height:100%;border:0}
+.lb-foot{display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding:12px 16px 14px}
+.lb-nav{display:flex;align-items:center;gap:4px}
+.lb-nav button{width:32px;height:32px;border-radius:9px;border:1px solid var(--line-2);
+  background:var(--card);color:var(--ink);cursor:pointer;font-size:16px;line-height:1;
+  display:grid;place-items:center;transition:all .15s}
+.lb-nav button:hover:not(:disabled){border-color:var(--ink-3)}
+.lb-nav button:disabled{opacity:.32;cursor:default}
+.lb-pos{font-size:.78rem;color:var(--ink-3);font-variant-numeric:tabular-nums;padding:0 4px}
+.lb-by{font-size:.86rem;color:var(--ink-2);display:flex;align-items:center;gap:7px;flex-wrap:wrap}
+.lb-by strong{color:var(--ink);font-weight:600}
+.lb-foot .btn{margin-left:auto}
+
+/* =============================== Footer =============================== */
+footer{border-top:1px solid var(--line);background:var(--bg-2);padding:36px 0 46px}
+footer h2{font-size:.72rem;text-transform:uppercase;letter-spacing:.15em;color:var(--ink-3);
+  margin:0 0 14px;font-weight:700}
+.links{display:grid;gap:8px;grid-template-columns:repeat(3,minmax(0,1fr))}
+.links a{display:flex;align-items:center;gap:9px;padding:10px 13px;border-radius:11px;
+  border:1px solid var(--line);background:var(--card);color:var(--ink);text-decoration:none;
+  font-size:.88rem;font-weight:500;transition:all .16s var(--ease)}
+.links a:hover{border-color:var(--accent);color:var(--accent);transform:translateY(-1px)}
+.links a::after{content:"↗";margin-left:auto;color:var(--ink-3);font-size:.85em}
+.links a:hover::after{color:var(--accent)}
+.foot-note{margin:28px 0 0;font-size:.8rem;color:var(--ink-3);line-height:1.7}
+.foot-note kbd{font-family:var(--mono);font-size:.9em;padding:1px 5px;border-radius:4px;
+  border:1px solid var(--line-2);background:var(--card);color:var(--ink-2)}
+
+@media (max-width:900px){
+  .links{grid-template-columns:repeat(2,minmax(0,1fr))}
+}
+@media (max-width:780px){
+  .filter-row{grid-template-columns:minmax(0,1fr) minmax(190px,240px)}
+  .filter-row #count{justify-self:end}
+}
+@media (max-width:640px){
+  .toolbar{position:static}
+  .toolbar-row{align-items:stretch}
+  .filter-row{grid-template-columns:1fr}
+  .filter-control,.filter-control.multi,.filter-control.grade{flex:1 1 100%}
+  .filter-control select{min-width:0;width:100%}
+  .filter-row #resetBtn{width:100%;justify-content:center}
+  .filter-row #count{width:100%;text-align:right;justify-self:stretch}
+  .pick-text,.pick .btn{width:100%}
+  .pick .icon-btn{width:38px}
+  .multi-panel{position:static;max-height:none}
+  .card{padding:15px 14px 14px;gap:8px;border-radius:15px;scroll-margin-top:230px}
+  .tech{font-size:clamp(1.45rem,8vw,1.8rem);line-height:1.15}
+  .video{flex-basis:100%}
+  .thumb{border-radius:11px}
+  .cat-section{margin-top:44px}
+  .cat-head{margin-bottom:20px}
+  .attack-group{margin-top:28px}
+  .lb-panel{border-radius:14px}
+  .stats{gap:22px}
+}
+@media (max-width:560px){
+  .links{grid-template-columns:1fr}
+}
+@media (max-width:420px){
+  .toolbar-row.search-row{flex-wrap:wrap}
+  .toolbar-row.random-row .btn:not(.icon-btn){width:100%;justify-content:center}
+  .count{text-align:left}
+}
+@media (prefers-reduced-motion:reduce){
+  *,*::before,*::after{animation-duration:.01ms!important;transition-duration:.01ms!important}
+}
+</style>
+</head>
+<body>
+
+<header class="hero">
+  <svg class="enso" viewBox="0 0 200 200" aria-hidden="true">
+    <circle cx="100" cy="100" r="80" fill="none" stroke="currentColor" stroke-width="10"
+            stroke-linecap="round" stroke-dasharray="452 51" transform="rotate(-56 100 100)"/>
+  </svg>
+  <div class="wrap">
+    <div class="hero-top">
+      <div>
+        <p class="kanji">合気道</p>
+        <h1>Aikido Techniques</h1>
+        <p class="sub">Programma esami Dan &middot;
+          <a href="https://progettoaiki.org" target="_blank" rel="noopener">ProgettoAiki</a></p>
+      </div>
+      <button class="btn icon-btn" id="themeBtn" aria-label="Cambia tema" title="Cambia tema">
+        <svg id="themeIcon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+             stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"></svg>
+      </button>
+    </div>
+
+    <div class="stats">
+      <div class="stat"><b id="sT">0</b><span>Tecniche</span></div>
+      <div class="stat"><b id="sV">0</b><span>Video</span></div>
+      <div class="stat"><b id="sM">0</b><span>Maestri</span></div>
+    </div>
+
+    <div class="hero-actions">
+      <a class="btn btn-accent" target="_blank" rel="noopener"
+         href="https://progettoaiki.org/files/ProgrammaEsamiDanAikidoProgettoAiki.pdf">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+             stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M12 3v12m0 0l-4-4m4 4l4-4M4 19h16"/></svg>
+        Programma esami (PDF)
+      </a>
+      <a class="btn" href="#playlists">Playlist dei maestri</a>
+    </div>
+  </div>
+</header>
+
+<div class="toolbar" id="toolbar">
+  <div class="wrap">
+    <div class="toolbar-row search-row">
+      <label class="search">
+        <span class="sr">Filtra tecniche</span>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+             stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>
+        <input id="q" type="search" placeholder="Filtra tecniche, attacchi, maestri&hellip;" autocomplete="off" spellcheck="false">
+        <button class="x" id="qx" type="button" aria-label="Cancella ricerca" hidden>&times;</button>
+      </label>
+    </div>
+
+    <div class="toolbar-row filter-row">
+      <div class="filter-control multi" id="catFilter">
+        <label for="catToggle">Tecniche</label>
+        <button class="multi-trigger" id="catToggle" type="button" aria-haspopup="true" aria-expanded="false" aria-controls="catPanel">
+          <span class="multi-summary" id="catSummary">Tutte le tecniche</span>
+        </button>
+        <div class="multi-panel" id="catPanel" hidden></div>
+      </div>
+      <div class="filter-control grade">
+        <label for="gradeSelect">Grado</label>
+        <select id="gradeSelect" aria-label="Filtro per grado">
+          <option value="">Tutti i gradi</option>
+        </select>
+      </div>
+      <button class="btn btn-ghost" id="resetBtn" hidden>Azzera filtri</button>
+      <span class="count" id="count"></span>
+    </div>
+
+    <div class="toolbar-row random-row">
+      <button class="btn btn-accent" id="randBtn">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+             stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <rect x="3" y="3" width="18" height="18" rx="4"/>
+          <circle cx="8.5" cy="8.5" r="1.4" fill="currentColor" stroke="none"/>
+          <circle cx="15.5" cy="15.5" r="1.4" fill="currentColor" stroke="none"/>
+          <circle cx="12" cy="12" r="1.4" fill="currentColor" stroke="none"/></svg>
+        Casuale
+      </button>
+      <div class="pick" id="pick" hidden>
+        <span class="dice" aria-hidden="true">&#9860;</span>
+        <div class="pick-text"><span>Tecnica estratta</span><strong id="pickName"></strong></div>
+        <button class="btn" id="pickGoto">Vai alla scheda</button>
+        <button class="btn" id="pickYt">Cerca su YouTube</button>
+        <button class="btn btn-ghost icon-btn" id="pickX" aria-label="Chiudi">&times;</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<main class="wrap">
+  <div id="catalog"></div>
+  <div class="empty" id="empty" hidden>
+    <span class="k" aria-hidden="true">空</span>
+    <p>Nessuna tecnica corrisponde ai filtri.</p>
+    <button class="btn" id="emptyReset">Azzera filtri</button>
+  </div>
+</main>
+
+<footer id="playlists">
+  <div class="wrap">
+    <h2>Playlist dei maestri</h2>
+    <div class="links">
+      <a href="https://www.youtube.com/@aikidocom/playlists" target="_blank" rel="noopener">Michel Erb</a>
+      <a href="https://www.youtube.com/@petervmarcke/playlists" target="_blank" rel="noopener">Peter Van Marcke</a>
+      <a href="https://www.youtube.com/@Shinburenseijyuku/playlists" target="_blank" rel="noopener">Shirakawa Ryuji</a>
+      <a href="https://www.youtube.com/@StefanStenudd" target="_blank" rel="noopener">Stefan Stenudd</a>
+      <a href="https://www.youtube.com/@BrunoGonzalezAikido/playlists" target="_blank" rel="noopener">Bruno Gonzalez</a>
+      <a href="https://www.youtube.com/@anisaikido6528/playlists" target="_blank" rel="noopener">Anis Aikido (Tissier)</a>
+      <a href="https://www.youtube.com/@clubaikidolleida8610/playlists" target="_blank" rel="noopener">Aikido Lleida (Tissier&hellip;)</a>
+      <a href="https://www.youtube.com/playlist?list=PL970B7BDB368DB950" target="_blank" rel="noopener">How to do Aikido (NY Aikikai)</a>
+      <a href="https://www.youtube.com/playlist?list=PLB0410E922787DE51" target="_blank" rel="noopener">Stefan Stenudd &mdash; Tanto</a>
+    </div>
+    <p class="foot-note">
+      Scorciatoie: <kbd>/</kbd> cerca &middot; <kbd>R</kbd> tecnica casuale &middot;
+      <kbd>&larr;</kbd> <kbd>&rarr;</kbd> video precedente/successivo &middot; <kbd>Esc</kbd> chiudi.<br>
+      I gradi indicati sono quelli in cui la tecnica compare nel programma esami.
+      Le note <em>&ldquo;&hellip;non trovato&rdquo;</em> segnalano video che non corrispondono esattamente alla forma richiesta.
+    </p>
+  </div>
+</footer>
+
+<div class="lb" id="lb" hidden>
+  <button class="lb-bd" id="lbBd" aria-label="Chiudi"></button>
+  <div class="lb-panel" role="dialog" aria-modal="true" aria-labelledby="lbTech">
+    <div class="lb-head">
+      <div>
+        <div class="attack" id="lbAttack"></div>
+        <p class="lb-tech" id="lbTech"></p>
+        <span class="cat lb-cat" id="lbCat"><i aria-hidden="true"></i><em id="lbCatName" style="font-style:normal"></em></span>
+      </div>
+      <button class="btn btn-ghost icon-btn" id="lbX" aria-label="Chiudi" style="margin-left:auto">&times;</button>
+    </div>
+    <div class="lb-frame"><iframe id="lbFrame" title="Video della tecnica" allow="autoplay; encrypted-media; web-share" allowfullscreen></iframe></div>
+    <div class="lb-foot">
+      <div class="lb-nav">
+        <button id="lbPrev" aria-label="Video precedente">&lsaquo;</button>
+        <span class="lb-pos" id="lbPos"></span>
+        <button id="lbNext" aria-label="Video successivo">&rsaquo;</button>
+      </div>
+      <div class="lb-by" id="lbBy"></div>
+      <a class="btn" id="lbYt" target="_blank" rel="noopener">Apri su YouTube</a>
+    </div>
+  </div>
+</div>
+
+<script>
+"use strict";
+
+/* ==========================================================================
+   Dati: una tecnica per elemento.
+     cat    categoria (Suwari Waza, Tachi Waza, ...)
+     grades gradi in cui la tecnica compare nel programma esami
+     attack attacco (uke)
+     tech   tecnica (tori)
+     videos [{id, by, role?, note?, missing?}]
+   Per aggiungere una tecnica basta aggiungere un oggetto a questo array.
+   ========================================================================== */
+const DATA = [
+  {"cat": "Suwari Waza","grades": ["3k","1d","2d","3d"],"attack": "Kata Dori","tech": "Ikkyo","videos": [{"id": "ppimQdRfu9Y","by": "Dojo Satori","role": "o+u"}]},
+  {"cat": "Suwari Waza","grades": ["1d","2d","3d"],"attack": "Kata Dori","tech": "Nikyo","videos": [{"id": "EfvVDLojkYQ","by": "Moriteru Ueshiba","role": "o+u"}]},
+  {"cat": "Suwari Waza","grades": ["2d","3d"],"attack": "Kata Dori","tech": "Sankyo","videos": [{"id": "8vAi8Md_u4s","by": "François Pichereau","role": "o+u"}]},
+  {"cat": "Suwari Waza","grades": ["2d","3d"],"attack": "Kata Dori","tech": "Kotegaeshi","videos": [{"id": "M-rwcq3iI-0","by": "Michel Erb","note": "Kata Dori non trovato"}]},
+  {"cat": "Suwari Waza","grades": ["2d","3d"],"attack": "Ryote Dori","tech": "Ikkyo","videos": [{"id": "lKx_o9wo6Gk","by": "Gergely Juhasz","role": "o"},{"id": "7YB3155HG2E","by": "Gergely Juhasz","role": "u"}]},
+  {"cat": "Suwari Waza","grades": ["2d","3d"],"attack": "Ryote Dori","tech": "Nikyo","videos": [{"id": "7UO9_wXLx_s","by": "Gergely Juhasz","role": "o"},{"id": "JTB2WgwBhXY","by": "Gergely Juhasz","role": "u"}]},
+  {"cat": "Suwari Waza","grades": ["2d","3d"],"attack": "Ryote Dori","tech": "Sankyo","videos": [{"id": "xW4XKNBsU14","by": "Christophe Aloisio","role": "o+u"}]},
+  {"cat": "Suwari Waza","grades": ["3d"],"attack": "Ryote Dori","tech": "Yonkyo","videos": [{"id": "mdSJchRXx8Y","by": "Dojo Aïkido Ryu Talant","role": "o+u"}]},
+  {"cat": "Suwari Waza","grades": ["3d"],"attack": "Ryo Kata Dori","tech": "Ikkyo","videos": [{"id": "YuA3OqRRvxU","by": "Dojo AikiSpain","role": "o+u"}]},
+  {"cat": "Suwari Waza","grades": ["3d"],"attack": "Ryo Kata Dori","tech": "Nikyo","videos": [{"id": "ScRgjzC6-ho","by": "Paul Muller","role": "o+u"}]},
+  {"cat": "Suwari Waza","grades": ["3d"],"attack": "Ryo Kata Dori","tech": "Sankyo","videos": [{"id": "NkTNkrE6Pwc","by": "Dojo Aikido klub Centar","role": "o+u"}]},
+  {"cat": "Suwari Waza","grades": ["3d"],"attack": "Ryo Kata Dori","tech": "Yonkyo","videos": [{"id": "WCnK0QXzWlo","by": "Dojo Aikido klub Centar","role": "o+u"}]},
+  {"cat": "Suwari Waza","grades": ["1d","2d","3d"],"attack": "Shomen Uchi","tech": "Ikkyo","videos": [{"id": "sQqUeFzZaNg","by": "Christian Tissier","role": "o+u"}]},
+  {"cat": "Suwari Waza","grades": ["3k","1d","2d","3d"],"attack": "Shomen Uchi","tech": "Nikyo","videos": [{"id": "ETVi6khmA_g","by": "Christian Tissier","role": "o+u"},{"id": "uMYY8EYC4xE","by": "Moriteru Ueshiba","role": "o+u"}]},
+  {"cat": "Suwari Waza","grades": ["1d","2d","3d"],"attack": "Shomen Uchi","tech": "Sankyo","videos": [{"id": "cNopeDu0_eo","by": "Christian Tissier","role": "o"},{"id": "8VcayghSyPY","by": "Christian Tissier","role": "u"}]},
+  {"cat": "Suwari Waza","grades": ["1d","2d","3d"],"attack": "Shomen Uchi","tech": "Yonkyo","videos": [{"id": "9hKavjjYZx8","by": "Moriteru Ueshiba","role": "o+u"}]},
+  {"cat": "Suwari Waza","grades": ["1d","2d","3d"],"attack": "Shomen Uchi","tech": "Kotegaeshi","videos": [{"id": "cqrFTwe70Gw","by": "Christian Tissier"}]},
+  {"cat": "Suwari Waza","grades": ["1d","2d","3d"],"attack": "Shomen Uchi","tech": "Iriminage","videos": [{"id": "HOoSY2cvQSY","by": "Christian Tissier"}]},
+  {"cat": "Suwari Waza","grades": ["1d","2d","3d"],"attack": "Yokomen Uchi","tech": "Ikkyo","videos": [{"id": "qtMIMFFdAa8","by": "François Pichereau","role": "o+u"}]},
+  {"cat": "Suwari Waza","grades": ["1d","2d","3d"],"attack": "Yokomen Uchi","tech": "Nikyo","videos": [{"id": "2QhwgJewf3w","by": "François Pichereau","role": "o+u"}]},
+  {"cat": "Suwari Waza","grades": ["1d","2d","3d"],"attack": "Yokomen Uchi","tech": "Sankyo","videos": [{"id": "WVI3ZByGh8o","by": "François Pichereau","role": "o+u"}]},
+  {"cat": "Suwari Waza","grades": ["1d","2d","3d"],"attack": "Yokomen Uchi","tech": "Yonkyo","videos": [{"id": "lGGI7hJjg_o","by": "François Pichereau","role": "o+u"},{"id": "hXrok6lxkM8","by": "Michel Erb","role": "o"}]},
+  {"cat": "Suwari Waza","grades": ["1d","2d","3d"],"attack": "Yokomen Uchi","tech": "Kotegaeshi","videos": [{"id": "dcLYSj8E1q0","by": "François Pichereau"}]},
+  {"cat": "Suwari Waza","grades": ["1d","2d","3d"],"attack": "Yokomen Uchi","tech": "Iriminage","videos": [{"id": "lyyMewZhorg","by": "François Pichereau"}]},
+  {"cat": "Hanmi Handachi Waza","grades": ["1d","2d","3d"],"attack": "Katate Dori","tech": "Ikkyo","videos": [{"id": "fIDhArw7IbA","by": "François Pichereau","role": "o+u"}]},
+  {"cat": "Hanmi Handachi Waza","grades": ["2d","3d"],"attack": "Katate Dori","tech": "Nikyo","videos": [{"id": "YnQHWC5DbUw","by": "François Pichereau","role": "o+u"}]},
+  {"cat": "Hanmi Handachi Waza","grades": ["2d","3d"],"attack": "Katate Dori","tech": "Sankyo","videos": [{"id": "cpA4hb27XTk","by": "Wojciech Głogowski","role": "o+u"}]},
+  {"cat": "Hanmi Handachi Waza","grades": ["2d","3d"],"attack": "Katate Dori","tech": "Yonkyo","videos": [{"id": "9FqdR44j0R4","by": "Dojo Aïkido Ryu Talant","role": "o+u"}]},
+  {"cat": "Hanmi Handachi Waza","grades": ["2d","3d"],"attack": "Katate Dori","tech": "Kotegaeshi","videos": [{"id": "gCO1popi3kU","by": "François Pichereau"}]},
+  {"cat": "Hanmi Handachi Waza","grades": ["2d","3d"],"attack": "Katate Dori","tech": "Iriminage","videos": [{"id": "503gVAdBP_A","by": "François Pichereau"}]},
+  {"cat": "Hanmi Handachi Waza","grades": ["3k","2d","3d"],"attack": "Katate Dori","tech": "Shihonage","videos": [{"id": "aPrGOf0qDac","by": "François Pichereau","role": "o+u"}]},
+  {"cat": "Hanmi Handachi Waza","grades": ["3k","2d","3d"],"attack": "Katate Dori","tech": "Kaiten Nage","videos": [{"id": "TplxaztrJSw","by": "Lars Stjernstedt","role": "uci"},{"id": "1sXRkvFDwm8","by": "Lars Stjernstedt","role": "soto"}]},
+  {"cat": "Hanmi Handachi Waza","grades": ["2d","3d"],"attack": "Katate Dori","tech": "Sumi Otoshi","videos": [{"id": "Cq1Y1wC433Y","by": "Dojo Aïkido Ryu Talant"}]},
+  {"cat": "Hanmi Handachi Waza","grades": ["2d","3d"],"attack": "Katate Dori","tech": "Kokyu Nage","videos": [{"id": "rpex8NlCwmk","by": "François Pichereau","role": "1st, 2nd, 3rd form"}]},
+  {"cat": "Hanmi Handachi Waza","grades": ["1k","1d","2d","3d"],"attack": "Ryote Dori","tech": "Shihonage","videos": [{"id": "JdAFs8xrRHU","by": "François Pichereau","role": "o+u"}]},
+  {"cat": "Hanmi Handachi Waza","grades": ["3d"],"attack": "Ushiro Kata Dori","tech": "Ikkyo","videos": [{"id": "BtYUkj287d4","by": "Dojo Aïkido Ryu Talant","role": "o"}]},
+  {"cat": "Hanmi Handachi Waza","grades": ["3d"],"attack": "Ushiro Kata Dori","tech": "Sankyo","videos": [{"id": "HdsX2oizp14","by": "François Pichereau","note": "found only Ryo"}]},
+  {"cat": "Hanmi Handachi Waza","grades": ["3d"],"attack": "Ushiro Kata Dori","tech": "Kokyu Nage","videos": [{"id": "pLs0ndYRDvY","by": "François Pichereau","note": "Ryo!"}]},
+  {"cat": "Hanmi Handachi Waza","grades": ["1k"],"attack": "Shomen Uchi","tech": "Kotegaeshi","videos": [{"id": "hTZbsGDiVJ4","by": "François Pichereau"}]},
+  {"cat": "Hanmi Handachi Waza","grades": ["1k"],"attack": "Shomen Uchi","tech": "Iriminage","videos": [{"id": "_tfD4mmaqJ8","by": "François Pichereau"}]},
+  {"cat": "Tachi Waza","grades": ["1d","2d","3d"],"attack": "Ai Hanmi Katate Dori","tech": "Ikkyo","videos": [{"id": "xHfu4kWAceM","by": "Christian Tissier","role": "o"},{"id": "3-117og5KN0","by": "Christian Tissier","role": "u"}]},
+  {"cat": "Tachi Waza","grades": ["1d","2d","3d"],"attack": "Ai Hanmi Katate Dori","tech": "Nikyo","videos": [{"id": "hmhUozNZoYo","by": "François Pichereau","role": "o+u"},{"id": "aOqSeySr5cw","by": "Christian Tissier","role": "u"}]},
+  {"cat": "Tachi Waza","grades": ["1d","2d","3d"],"attack": "Ai Hanmi Katate Dori","tech": "Sankyo","videos": [{"id": "5rbJFu5_U9k","by": "Christian Tissier","role": "o"},{"id": "JNucTtFGZGw","by": "François Pichereau","role": "o+u"}]},
+  {"cat": "Tachi Waza","grades": ["3d"],"attack": "Ai Hanmi Katate Dori","tech": "Yonkyo","videos": [{"id": "ge1SYHXPjOY","by": "Michel Erb","role": "o"},{"id": "QBTX52BEnfE","by": "Michel Erb","role": "u"}]},
+  {"cat": "Tachi Waza","grades": ["1d","2d","3d"],"attack": "Ai Hanmi Katate Dori","tech": "Kotegaeshi","videos": [{"id": "hnjD0s5devg","by": "Christian Tissier"}]},
+  {"cat": "Tachi Waza","grades": ["1d","2d","3d"],"attack": "Ai Hanmi Katate Dori","tech": "Iriminage","videos": [{"id": "z74nXcAJEv0","by": "Christian Tissier"}]},
+  {"cat": "Tachi Waza","grades": ["1d","2d","3d"],"attack": "Ai Hanmi Katate Dori","tech": "Shihonage","videos": [{"id": "11esPKzz8I4","by": "Michel Erb","role": "o"},{"id": "gc19Vqi3mkU","by": "Michel Erb","role": "u"}]},
+  {"cat": "Tachi Waza","grades": ["1d","2d","3d"],"attack": "Ai Hanmi Katate Dori","tech": "Udekimenage","videos": [{"id": "Eao8fdYiA48","by": "Christian Tissier"}]},
+  {"cat": "Tachi Waza","grades": ["1d","2d","3d"],"attack": "Ai Hanmi Katate Dori","tech": "Koshinage","videos": [{"id": "IkG0ue8bXTo","by": "François Pichereau","role": "1st, 2nd form"}]},
+  {"cat": "Tachi Waza","grades": ["2d","3d"],"attack": "Ai Hanmi Katate Dori","tech": "Sumi Otoshi","videos": [{"id": "sKdx2D9G5m0","by": "François Pichereau"}]},
+  {"cat": "Tachi Waza","grades": ["1d","2d","3d"],"attack": "Katate Dori","tech": "Ikkyo","videos": [{"id": "twFAdMxyto8","by": "Christian Tissier","role": "o"},{"id": "xkHG7Me1DN4","by": "Christian Tissier","role": "u"}]},
+  {"cat": "Tachi Waza","grades": ["1d","2d","3d"],"attack": "Katate Dori","tech": "Nikyo","videos": [{"id": "ESeQSfg1o3Q","by": "François Pichereau","role": "o+u"}]},
+  {"cat": "Tachi Waza","grades": ["1d","2d","3d"],"attack": "Katate Dori","tech": "Sankyo","videos": [{"id": "9BjDZOYZYVM","by": "Christian Tissier","role": "o"},{"id": "ZqFdQ4gDH5k","by": "Christian Tissier","role": "u"}]},
+  {"cat": "Tachi Waza","grades": ["1d","2d","3d"],"attack": "Katate Dori","tech": "Yonkyo","videos": [{"id": "PdLR-g5_avw","by": "Christian Tissier","role": "o+u"}]},
+  {"cat": "Tachi Waza","grades": ["1d","2d","3d"],"attack": "Katate Dori","tech": "Kotegaeshi","videos": [{"id": "yc7LJlZrfTQ","by": "Christian Tissier"}]},
+  {"cat": "Tachi Waza","grades": ["1d","2d","3d"],"attack": "Katate Dori","tech": "Iriminage","videos": [{"id": "mzpFTyaUEoI","by": "Christian Tissier","role": "1st, 2nd form"},{"id": "mFBpiRuQOrQ","by": "Christian Tissier","role": "3rd, 4th form"}]},
+  {"cat": "Tachi Waza","grades": ["1d","2d","3d"],"attack": "Katate Dori","tech": "Shihonage","videos": [{"id": "j8HHvYYaTBQ","by": "Christian Tissier","role": "o+u"}]},
+  {"cat": "Tachi Waza","grades": ["1d","2d","3d"],"attack": "Katate Dori","tech": "Udekimenage","videos": [{"id": "BymVlxGd6BM","by": "François Pichereau","role": "o+u"}]},
+  {"cat": "Tachi Waza","grades": ["2d","3d"],"attack": "Katate Dori","tech": "Tenchinage","videos": [{"id": "tp2Peirz_5Y","by": "Christian Tissier","role": "o"},{"id": "AaWe-rJxv7o","by": "Dojo Aikido klub Centar","role": "o+u"}]},
+  {"cat": "Tachi Waza","grades": ["3k","2d","3d"],"attack": "Katate Dori","tech": "Kaiten Nage","videos": [{"id": "o4wwYZ8-BIU","by": "Christian Tissier","role": "o","note": "Uchi!"},{"id": "9UTulCYqKp0","by": "Christian Tissier","role": "u","note": "Uchi!"}]},
+  {"cat": "Tachi Waza","grades": ["2d","3d"],"attack": "Katate Dori","tech": "Sumi Otoshi","videos": [{"id": "wiBqYzuJJa4","by": "Christian Tissier"}]},
+  {"cat": "Tachi Waza","grades": ["2d","3d"],"attack": "Katate Dori","tech": "Ude Garami","videos": [{"id": "BonMjaHqay4","by": "François Pichereau","role": "1st, 2nd form"}]},
+  {"cat": "Tachi Waza","grades": ["1d","2d","3d"],"attack": "Katate Dori","tech": "Koshinage","videos": [{"id": "7ZjGnP3dyDs","by": "Erik Louw"}]},
+  {"cat": "Tachi Waza","grades": ["1d","2d","3d"],"attack": "Katate Dori","tech": "Kokyu Nage","videos": [{"id": "rPiRb-2qUDQ","by": "François Pichereau","role": "1st, 2nd, 3rd, 4th form"}]},
+  {"cat": "Tachi Waza","grades": ["3k","1d","2d","3d"],"attack": "Ryote Dori","tech": "Ikkyo","videos": [{"id": "n_FsCsNiExc","by": "Christian Tissier","role": "o"},{"id": "VmxWUo8N534","by": "Christian Tissier","role": "u"}]},
+  {"cat": "Tachi Waza","grades": ["1d","2d","3d"],"attack": "Ryote Dori","tech": "Kotegaeshi","videos": [{"id": "0P7hxhSgY3o","by": "Christian Tissier"}]},
+  {"cat": "Tachi Waza","grades": ["1d","2d","3d"],"attack": "Ryote Dori","tech": "Iriminage","videos": [{"id": "i3YOvWYpc1Y","by": "Christian Tissier"}]},
+  {"cat": "Tachi Waza","grades": ["1d","2d","3d"],"attack": "Ryote Dori","tech": "Shihonage","videos": [{"id": "WQc0-n9VM8Q","by": "Dojo Aïkido Ryu Talant","role": "o+u"}]},
+  {"cat": "Tachi Waza","grades": ["1d","2d","3d"],"attack": "Ryote Dori","tech": "Udekimenage","videos": [{"id": "fLkEsQ1fSHY","by": "Paul Muller","role": "o+u"}]},
+  {"cat": "Tachi Waza","grades": ["1d","2d","3d"],"attack": "Ryote Dori","tech": "Tenchinage","videos": [{"id": "dbNpOCvwBXg","by": "Christian Tissier","role": "o"},{"id": "592OryKq5rE","by": "Dojo Aikido klub Centar","role": "o+u"}]},
+  {"cat": "Tachi Waza","grades": ["1d","2d","3d"],"attack": "Ryote Dori","tech": "Koshinage","videos": [{"id": "CJf5PdOrwjE","by": "François Pichereau","role": "1st, 2nd form"}]},
+  {"cat": "Tachi Waza","grades": ["1d","2d","3d"],"attack": "Ryote Dori","tech": "Kokyu Nage","videos": [{"id": "cf0uD0Ys3BU","by": "François Pichereau","role": "1st, 2nd, 3rd form"}]},
+  {"cat": "Tachi Waza","grades": ["1d","2d","3d"],"attack": "Kata Dori","tech": "Ikkyo","videos": [{"id": "cxRYw51XKDE","by": "Christian Tissier","role": "o"},{"id": "scM_JNBWork","by": "Christian Tissier","role": "u"}]},
+  {"cat": "Tachi Waza","grades": ["1d","2d","3d"],"attack": "Kata Dori","tech": "Nikyo","videos": [{"id": "RU8khmsbObg","by": "Christian Tissier","role": "o"},{"id": "cFUOxaIi3Po","by": "Christian Tissier","role": "u"}]},
+  {"cat": "Tachi Waza","grades": ["3d"],"attack": "Kata Dori","tech": "Sankyo","videos": [{"id": "XlMJQMbfKo8","by": "François Pichereau","role": "o+u"}]},
+  {"cat": "Tachi Waza","grades": ["3d"],"attack": "Kata Dori","tech": "Yonkyo","videos": [{"id": "QDwNQL3jQkE","by": "Alin","role": "o+u"}]},
+  {"cat": "Tachi Waza","grades": ["2d","3d"],"attack": "Kata Dori Menuchi","tech": "Ikkyo","videos": [{"id": "umNi5fKeaLA","by": "Christian Tissier","role": "o"},{"id": "Lzl2q5kgy-8","by": "Christian Tissier","role": "u"}]},
+  {"cat": "Tachi Waza","grades": ["2d","3d"],"attack": "Kata Dori Menuchi","tech": "Shihonage","videos": [{"id": "GngZmO8DhLg","by": "Christian Tissier","role": "o","note": "u?"}]},
+  {"cat": "Tachi Waza","grades": ["2d","3d"],"attack": "Kata Dori Menuchi","tech": "Kotegaeshi","videos": [{"id": "wzYiTwdsUMY","by": "Christian Tissier"}]},
+  {"cat": "Tachi Waza","grades": ["2d","3d"],"attack": "Kata Dori Menuchi","tech": "Iriminage","videos": [{"id": "1OwjDQMrj8k","by": "Shirakawa"}]},
+  {"cat": "Tachi Waza","grades": ["2d","3d"],"attack": "Kata Dori Menuchi","tech": "Kokyu Nage","videos": [{"id": "V1ZTDYl1fgI","by": "François Pichereau"},{"id": "6SW9vwDEAps","by": "Leonardo Sodré"}]},
+  {"cat": "Tachi Waza","grades": ["3k","2d","3d"],"attack": "Katate Ryote Dori","tech": "Ikkyo","videos": [{"id": "ZsLsRI3KukQ","by": "Paul Muller","role": "o+u"}]},
+  {"cat": "Tachi Waza","grades": ["3k","2d","3d"],"attack": "Katate Ryote Dori","tech": "Nikyo","videos": [{"id": "Ork8roqH68A","by": "François Pichereau","role": "o+u"},{"id": "ofEGG2PUi_w","by": "Dojo Aikido Ryu Talant","role": "o+u"}]},
+  {"cat": "Tachi Waza","grades": ["3k","3d"],"attack": "Katate Ryote Dori","tech": "Kotegaeshi","videos": [{"id": "hQRDGc3Oc9A","by": "François Pichereau"}]},
+  {"cat": "Tachi Waza","grades": ["3d"],"attack": "Katate Ryote Dori","tech": "Iriminage","videos": [{"id": "pR8oaFCPXXI","by": "François Pichereau","role": "o+u"}]},
+  {"cat": "Tachi Waza","grades": ["1k","3d"],"attack": "Katate Ryote Dori","tech": "Juji Garami","videos": [{"id": "zG51CPcfiRQ","by": "François Pichereau"}]},
+  {"cat": "Tachi Waza","grades": ["3k","2d","3d"],"attack": "Katate Ryote Dori","tech": "Udekimenage","videos": [{"id": "Ml52h_GKrqw","by": "François Pichereau","role": "o+u"}]},
+  {"cat": "Tachi Waza","grades": ["1d","2d","3d"],"attack": "Katate Ryote Dori","tech": "Naname Kokyu Nage","videos": [{"id": "5tdqXPWGUOc","by": "Paul Muller"}]},
+  {"cat": "Tachi Waza","grades": ["3d"],"attack": "Katate Ryote Dori","tech": "Koshinage","videos": [{"id": "THAjuIbpkcI","by": "François Pichereau"}]},
+  {"cat": "Tachi Waza","grades": ["3k","2d","3d"],"attack": "Katate Ryote Dori","tech": "Kokyu Nage","videos": [{"id": "KfM3kIRfNkY","by": "François Pichereau"}]},
+  {"cat": "Tachi Waza","grades": ["3d"],"attack": "Muna Dori","tech": "Ikkyo","videos": [{"id": "_NJZ4dGA0I8","by": "François Pichereau","role": "o+u"}]},
+  {"cat": "Tachi Waza","grades": ["3d"],"attack": "Muna Dori","tech": "Nikyo","videos": [{"id": "h479PiVsDRA","by": "Dojo Copenhagen Aiki Shuren","role": "o"},{"id": "XD-rzmUzhLg","by": "Morihiro Saito","role": "variations"}]},
+  {"cat": "Tachi Waza","grades": ["1k","3d"],"attack": "Muna Dori","tech": "Shihonage","videos": [{"id": "RZnxmCDsKTk","by": "François Pichereau"}]},
+  {"cat": "Tachi Waza","grades": ["1d","2d","3d"],"attack": "Shomen Uchi","tech": "Ikkyo","videos": [{"id": "3YLH5QuW4Xw","by": "Christian Tissier","role": "o"},{"id": "y1EwBB21zPA","by": "Christian Tissier","role": "u"}]},
+  {"cat": "Tachi Waza","grades": ["3k","1d","2d","3d"],"attack": "Shomen Uchi","tech": "Nikyo","videos": [{"id": "JHULMQtky3w","by": "Christian Tissier","role": "o"},{"id": "E9R7MmsAenU","by": "Christian Tissier","role": "u"}]},
+  {"cat": "Tachi Waza","grades": ["3k","1d","2d","3d"],"attack": "Shomen Uchi","tech": "Sankyo","videos": [{"id": "zt_Z43_v4ZY","by": "Christian Tissier","role": "o"},{"id": "Lz1pEzkwfWU","by": "Christian Tissier","role": "u"}]},
+  {"cat": "Tachi Waza","grades": ["3k","1d","2d","3d"],"attack": "Shomen Uchi","tech": "Uchi Kaiten Sankyo","videos": [{"id": "N-mdkNG6rRI","by": "François Pichereau","role": "o+u"}]},
+  {"cat": "Tachi Waza","grades": ["1d","2d","3d"],"attack": "Shomen Uchi","tech": "Yonkyo","videos": [{"id": "KWTFWqk-0i0","by": "Christian Tissier","role": "o"},{"id": "Zr-VDIOJR44","by": "Michel Erb","role": "u"}]},
+  {"cat": "Tachi Waza","grades": ["1k","1d","2d","3d"],"attack": "Shomen Uchi","tech": "Gokyo","videos": [{"id": "Hge2r42U9sI","by": "Christian Tissier"}]},
+  {"cat": "Tachi Waza","grades": ["1d","2d","3d"],"attack": "Shomen Uchi","tech": "Kotegaeshi","videos": [{"id": "TvkMWCS50i8","by": "Christian Tissier"}]},
+  {"cat": "Tachi Waza","grades": ["1d","2d","3d"],"attack": "Shomen Uchi","tech": "Iriminage","videos": [{"id": "IYuWQen5NjQ","by": "Christian Tissier"}]},
+  {"cat": "Tachi Waza","grades": ["2d","3d"],"attack": "Shomen Uchi","tech": "Shihonage","videos": [{"id": "1ekCrUW2SDs","by": "Christian Tissier","role": "o 1st form"},{"id": "mJZ7IFLm4N4","by": "Christian Tissier","role": "o 2nd form"}]},
+  {"cat": "Tachi Waza","grades": ["1d","2d","3d"],"attack": "Shomen Uchi","tech": "Soto Kaiten Nage","videos": [{"id": "7JLwrECfGK4","by": "Christian Tissier"}]},
+  {"cat": "Tachi Waza","grades": ["1d","2d","3d"],"attack": "Shomen Uchi","tech": "Kokyu Nage","videos": [{"id": "PL2EOtLgqe0","by": "François Pichereau","role": "1st, 2nd, 3rd form"},{"id": "i-Vq69mQ1T8","by": "Peter Van Marcke","role": "6 variations"}]},
+  {"cat": "Tachi Waza","grades": ["3k","1d","2d","3d"],"attack": "Yokomen Uchi","tech": "Ikkyo","videos": [{"id": "VoP8GloXlwA","by": "Christian Tissier","role": "o"},{"id": "WgLAr54c9Ko","by": "Christian Tissier","role": "u"}]},
+  {"cat": "Tachi Waza","grades": ["3k","1d","2d","3d"],"attack": "Yokomen Uchi","tech": "Nikyo","videos": [{"id": "Sqx6kDmkq0A","by": "François Pichereau","role": "o+u"},{"id": "DHk2mfjCQns","by": "Christian Tissier","role": "u 1st form"},{"id": "oEYnCn6C058","by": "Christian Tissier","role": "u 2nd form"}]},
+  {"cat": "Tachi Waza","grades": ["3k","1d","2d","3d"],"attack": "Yokomen Uchi","tech": "Sankyo","videos": [{"id": "EmJbj2cCq-g","by": "Christian Tissier","role": "o 1st form"},{"id": "CJpkyz4ZEhI","by": "Christian Tissier","role": "o 2nd form"},{"id": "7iRhtnYV17s","by": "Christian Tissier","role": "u"}]},
+  {"cat": "Tachi Waza","grades": ["1d","2d","3d"],"attack": "Yokomen Uchi","tech": "Yonkyo","videos": [{"id": "9O0XzO95PRc","by": "Christian Tissier","role": "o"},{"id": "OzooAlk8Y5k","by": "Christian Tissier","role": "u"}]},
+  {"cat": "Tachi Waza","grades": ["1d","2d","3d"],"attack": "Yokomen Uchi","tech": "Gokyo","videos": [{"id": "O_YeVrqbd1I","by": "Christian Tissier"}]},
+  {"cat": "Tachi Waza","grades": ["3k","1d","2d","3d"],"attack": "Yokomen Uchi","tech": "Kotegaeshi","videos": [{"id": "LTGRZgRZjvc","by": "Christian Tissier","role": "int"},{"id": "Zkgb9lem_mU","by": "Christian Tissier","role": "ext"}]},
+  {"cat": "Tachi Waza","grades": ["3k","1d","2d","3d"],"attack": "Yokomen Uchi","tech": "Iriminage","videos": [{"id": "QRLgIxLdldk","by": "Christian Tissier"}]},
+  {"cat": "Tachi Waza","grades": ["1d","2d","3d"],"attack": "Yokomen Uchi","tech": "Shihonage","videos": [{"id": "7tebWp2MzgM","by": "Christian Tissier","role": "o"},{"id": "ORoAK6tIc00","by": "Christian Tissier","role": "u"}]},
+  {"cat": "Tachi Waza","grades": ["1d","2d","3d"],"attack": "Yokomen Uchi","tech": "Kokyu Nage","videos": [{"id": "LhWuYF16CIk","by": "François Pichereau","role": "1st, 2nd, 3rd, 4th form"},{"id": "vQJCBIJp7bc","by": "Leonardo Sodre","role": "1st, 2nd, 3rd form"}]},
+  {"cat": "Tachi Waza","grades": ["1k","2d","3d"],"attack": "Chudan Tsuki","tech": "Ikkyo","videos": [{"id": "x5v9LU7iCec","by": "Christian Tissier","role": "o"},{"id": "u81MkfKdLZI","by": "Christian Tissier","role": "u"}]},
+  {"cat": "Tachi Waza","grades": ["2d","3d"],"attack": "Chudan Tsuki","tech": "Uchi Kaiten Sankyo","videos": [{"id": "oj8QK_Kvs9c","by": "Christian Tissier"}]},
+  {"cat": "Tachi Waza","grades": ["1k","1d","2d","3d"],"attack": "Chudan Tsuki","tech": "Kotegaeshi","videos": [{"id": "2DosmmcHATw","by": "Christian Tissier","role": "1st form"},{"id": "7w4yyeT8UeU","by": "Christian Tissier","role": "2nd form"}]},
+  {"cat": "Tachi Waza","grades": ["3k","1d","2d","3d"],"attack": "Chudan Tsuki","tech": "Iriminage","videos": [{"id": "WleULqVQ2QI","by": "Christian Tissier"}]},
+  {"cat": "Tachi Waza","grades": ["1k","1d","2d","3d"],"attack": "Chudan Tsuki","tech": "Soto Kaiten Nage","videos": [{"id": "C2zFDezyfvw","by": "Christian Tissier"}]},
+  {"cat": "Tachi Waza","grades": ["3d"],"attack": "Chudan Tsuki","tech": "Udekimenage","videos": [{"id": "Ec5R8nyYWOg","by": "François Pichereau","role": "o+u"}]},
+  {"cat": "Tachi Waza","grades": ["2d","3d"],"attack": "Chudan Tsuki","tech": "Hiji Kime Osae","videos": [{"id": "cgpGb0wCpSQ","by": "Christian Tissier"},{"id": "gGksHc6Ej5Q","by": "François Pichereau","role": "o+u"}]},
+  {"cat": "Tachi Waza","grades": ["2d","3d"],"attack": "Chudan Tsuki","tech": "Kokyu Nage","videos": [{"id": "AhdjO06_93o","by": "François Pichereau"},{"id": "6fGHfGl3s7k","by": "Leonardo Sodre"}]},
+  {"cat": "Tachi Waza","grades": ["4d"],"attack": "Jodan Tsuki","tech": "Ikkyo","videos": [{"id": "VUh06k0aQ7o","by": "Christian Tissier","role": "o"}]},
+  {"cat": "Tachi Waza","grades": ["1k"],"attack": "Jodan Tsuki","tech": "Yonkyo","videos": [{"id": "4lWtwVfYLfg","by": "Dojo Darmstadt","role": "o"},{"id": "Kbqaf2YwJQQ","by": "Christian Tissier","role": "u"}]},
+  {"cat": "Tachi Waza","grades": ["1k"],"attack": "Jodan Tsuki","tech": "Iriminage","videos": [{"id": "_735W6ZDzGA","by": "Christian Tissier"},{"id": "JG9MGAGUguI","by": "Leonardo Sodre"}]},
+  {"cat": "Tachi Waza","grades": ["1k"],"attack": "Jodan Tsuki","tech": "Shihonage","videos": [{"id": "B_2KDjB8O44","by": "François Pichereau","role": "o+u"},{"id": "T0a2kN9sE4M","by": "Paul Muller","role": "o"}]},
+  {"cat": "Tachi Waza","grades": ["1k"],"attack": "Jodan Tsuki","tech": "Ushiro Kiri otoshi","videos": [{"id": "srfjVjm5ge8","by": "Paul Muller"}]},
+  {"cat": "Tachi Waza","grades": ["1k"],"attack": "Jodan Tsuki","tech": "Koshinage","videos": [{"id": "IT52cQMPn5c","by": "Paul Muller"}]},
+  {"cat": "Tachi Waza","grades": ["1k","2d","3d"],"attack": "Shomen Uchi","tech": "Jiyu Waza","videos": [{"id": "c4r6oHqzPEw","by": "Bak László"}]},
+  {"cat": "Tachi Waza","grades": ["1k","3d"],"attack": "Yokomen Uchi","tech": "Jiyu Waza","videos": [{"id": "ImTGtaBbAkk","by": "Leonardo Sodre"}]},
+  {"cat": "Ushiro Waza","grades": ["1d","2d","3d"],"attack": "Ushiro Ryote Dori","tech": "Ikkyo","videos": [{"id": "PWEZfhmkt4I","by": "Christian Tissier","role": "o"},{"id": "n07sJtm8RPg","by": "Christian Tissier","role": "u"}]},
+  {"cat": "Ushiro Waza","grades": ["3k","1d","2d","3d"],"attack": "Ushiro Ryote Dori","tech": "Nikyo","videos": [{"id": "0qcSRQYx-dc","by": "Christian Tissier","role": "u"}]},
+  {"cat": "Ushiro Waza","grades": ["1d","2d","3d"],"attack": "Ushiro Ryote Dori","tech": "Hiji Kime Osae","videos": [{"id": "ubKKuDYzBKw","by": "Paul Muller"}]},
+  {"cat": "Ushiro Waza","grades": ["1d","2d","3d"],"attack": "Ushiro Ryote Dori","tech": "Sankyo","videos": [{"id": "--P1sYxcfZo","by": "Christian Tissier","role": "o"},{"id": "eJlRvR0sU5M","by": "Christian Tissier","role": "u"}]},
+  {"cat": "Ushiro Waza","grades": ["1d","2d","3d"],"attack": "Ushiro Ryote Dori","tech": "Yonkyo","videos": [{"id": "VchT_WOLtIM","by": "Paul Muller","role": "o+u"}]},
+  {"cat": "Ushiro Waza","grades": ["3k","1d","2d","3d"],"attack": "Ushiro Ryote Dori","tech": "Kotegaeshi","videos": [{"id": "2zRk5LOzkdE","by": "Christian Tissier"}]},
+  {"cat": "Ushiro Waza","grades": ["3k","1d","2d","3d"],"attack": "Ushiro Ryote Dori","tech": "Iriminage","videos": [{"id": "WlTchEjLeFA","by": "Christian Tissier"}]},
+  {"cat": "Ushiro Waza","grades": ["3k","1d","2d","3d"],"attack": "Ushiro Ryote Dori","tech": "Shihonage","videos": [{"id": "jRTJYoXv8N4","by": "Christian Tissier"}]},
+  {"cat": "Ushiro Waza","grades": ["1k","2d","3d"],"attack": "Ushiro Ryote Dori","tech": "Koshinage","videos": [{"id": "Hrx8EYUgV7w","by": "François Pichereau","role": "1st, 2nd form"}]},
+  {"cat": "Ushiro Waza","grades": ["2d","3d"],"attack": "Ushiro Ryote Dori","tech": "Kokyu Nage","videos": [{"id": "19X3GZo2GgY","by": "François Pichereau","role": "1st, 2nd, 3rd form"}]},
+  {"cat": "Ushiro Waza","grades": ["3d"],"attack": "Ushiro Ryote Dori","tech": "Juji Garami","videos": [{"id": "Fg_gJL9A6Yg","by": "Christian Tissier"}]},
+  {"cat": "Ushiro Waza","grades": ["2d","3d"],"attack": "Ushiro Ryo Kata Dori","tech": "Ikkyo","videos": [{"id": "1AxrrJbjWYA","by": "François Pichereau","role": "o+u"}]},
+  {"cat": "Ushiro Waza","grades": ["2d","3d"],"attack": "Ushiro Ryo Kata Dori","tech": "Nikyo","videos": [{"id": "ra5PXm-Y9fk","by": "François Pichereau","role": "o+u"}]},
+  {"cat": "Ushiro Waza","grades": ["2d","3d"],"attack": "Ushiro Ryo Kata Dori","tech": "Sankyo","videos": [{"id": "aRVemLiiwkc","by": "François Pichereau","role": "o+u"}]},
+  {"cat": "Ushiro Waza","grades": ["2d","3d"],"attack": "Ushiro Ryo Kata Dori","tech": "Yonkyo","videos": [{"id": "8nlgJNchuUE","by": "Dojo Aïkido Ryu Talant","role": "o+u"}]},
+  {"cat": "Ushiro Waza","grades": ["2d","3d"],"attack": "Ushiro Ryo Kata Dori","tech": "Kokyu Nage","videos": [{"id": "qEHvH_B7azQ","by": "François Pichereau"},{"id": "6CWkLZFw5vo","by": "Dojo Wadokan"}]},
+  {"cat": "Ushiro Waza","grades": ["2d","3d"],"attack": "Ushiro Ryo Kata Dori","tech": "Aiki Otoshi","videos": [{"id": "zX5o42BR0Zc","by": "Christian Tissier"}]},
+  {"cat": "Ushiro Waza","grades": ["1k","3d"],"attack": "Ushiro Katate Dori Kubishime","tech": "Ikkyo","videos": [{"id": "tx7XCx60Cj0","by": "François Pichereau","role": "o+u"}]},
+  {"cat": "Ushiro Waza","grades": ["3d"],"attack": "Ushiro Katate Dori Kubishime","tech": "Sankyo","videos": [{"id": "B-rPybNXlV8","by": "François Pichereau","role": "o+u"}]},
+  {"cat": "Ushiro Waza","grades": ["3d"],"attack": "Ushiro Katate Dori Kubishime","tech": "Kotegaeshi","videos": [{"id": "gV5mMz73WCI","by": "François Pichereau"}]},
+  {"cat": "Ushiro Waza","grades": ["1k","3d"],"attack": "Ushiro Katate Dori Kubishime","tech": "Shihonage","videos": [{"id": "Zc6-_WX7RRY","by": "François Pichereau"}]},
+  {"cat": "Ushiro Waza","grades": ["3d"],"attack": "Ushiro Katate Dori Kubishime","tech": "Koshinage","videos": [{"id": "8iBTJK6po4s","by": "François Pichereau"}]},
+  {"cat": "Ushiro Waza","grades": ["3d"],"attack": "Ushiro Katate Dori Kubishime","tech": "Kokyu Nage","videos": [{"id": "UUzWQGbWAn0","by": "François Pichereau"}]},
+  {"cat": "Ushiro Waza","grades": ["1k","3d"],"attack": "Ushiro Eri Dori","tech": "Ikkyo","videos": [{"id": "BLiJ7bLLqFk","by": "François Pichereau","role": "o+u"}]},
+  {"cat": "Ushiro Waza","grades": ["3d"],"attack": "Ushiro Eri Dori","tech": "Nikyo","videos": [{"id": "UXpVDqKI8d0","by": "François Pichereau","role": "o+u"}]},
+  {"cat": "Ushiro Waza","grades": ["1k"],"attack": "Ushiro Eri Dori","tech": "Kotegaeshi","videos": [{"id": "lrBvKPIr4Fw","by": "Dojo Darmstadt"}]},
+  {"cat": "Ushiro Waza","grades": ["1k"],"attack": "Ushiro Eri Dori","tech": "Shihonage","videos": [{"id": "G5DdZJS0Jj0","by": "Dojo Darmstadt"}]},
+  {"cat": "Futari Dori","grades": ["4d"],"attack": "","tech": "3 tecniche","videos": [{"id": "Ug6IqIZrax8","by": "Koichi Tohei"}]},
+  {"cat": "Randori","grades": ["1d","2d","3d"],"attack": "Mae Ryo Kata Dori","tech": "Jiyu Waza","videos": [{"id": "xxx","by": "xxx","missing": true}]},
+  {"cat": "Randori","grades": ["2d","3d"],"attack": "Shomen Uchi","tech": "Jiyu Waza","videos": [{"id": "xxx","by": "xxx","missing": true}]},
+  {"cat": "Randori","grades": ["3d"],"attack": "Yokomen Uchi","tech": "Jiyu Waza","videos": [{"id": "xxx","by": "xxx","missing": true}]},
+  {"cat": "Tanto Dori","grades": ["2d","3d"],"attack": "Shomen Uchi Honte","tech": "Gokyo","videos": [{"id": "jaBjyrGxzR4","by": "François Pichereau","note": "Gyakute! Honte not found"}]},
+  {"cat": "Tanto Dori","grades": ["2d","3d"],"attack": "Shomen Uchi Honte","tech": "Sankyo","videos": [{"id": "Lv6xr0n7wVU","by": "François Pichereau","note": "Gyakute! Honte not found"}]},
+  {"cat": "Tanto Dori","grades": ["2d","3d"],"attack": "Shomen Uchi Honte","tech": "Kotegaeshi","videos": [{"id": "_9ovwAFfK38","by": "Paul Muller","note": "Gyakute! Honte not found"}]},
+  {"cat": "Tanto Dori","grades": ["3d"],"attack": "Shomen Uchi Gyakute","tech": "Gokyo","videos": [{"id": "jaBjyrGxzR4","by": "François Pichereau"}]},
+  {"cat": "Tanto Dori","grades": ["3d"],"attack": "Shomen Uchi Gyakute","tech": "Kotegaeshi","videos": [{"id": "_9ovwAFfK38","by": "Paul Muller"}]},
+  {"cat": "Tanto Dori","grades": ["3d"],"attack": "Yokomen Uchi Honte","tech": "Gokyo","videos": [{"id": "Im-_PTdxMXE","by": "Kükoshin Walsei"}]},
+  {"cat": "Tanto Dori","grades": ["3d"],"attack": "Yokomen Uchi Honte","tech": "Sankyo","videos": [{"id": "C5EyNALXQFE","by": "François Pichereau","role": "1st, 2nd form","note": "Gyakute! Honte not found"}]},
+  {"cat": "Tanto Dori","grades": ["2d","3d"],"attack": "Yokomen Uchi Honte","tech": "Kotegaeshi","videos": [{"id": "Ud5EVrXv1hQ","by": "Kükoshin Walsei"}]},
+  {"cat": "Tanto Dori","grades": ["2d","3d"],"attack": "Yokomen Uchi Honte","tech": "Shihonage","videos": [{"id": "9HUYMhkOhB0","by": "Kükoshin Walsei","role": "o"},{"id": "2Q_xlOYpCSM","by": "Kükoshin Walsei","role": "u"}]},
+  {"cat": "Tanto Dori","grades": ["2d","3d"],"attack": "Yokomen Uchi Honte","tech": "Naname Kokyu Nage","videos": [{"id": "xxx","by": "xxx","role": "xxx","missing": true}]},
+  {"cat": "Tanto Dori","grades": ["3d"],"attack": "Yokomen Uchi Gyakute","tech": "Gokyo","videos": [{"id": "WbLNDOMnhpM","by": "François Pichereau"}]},
+  {"cat": "Tanto Dori","grades": ["3d"],"attack": "Yokomen Uchi Gyakute","tech": "Kotegaeshi","videos": [{"id": "ES6aUoF5WHw","by": "François Pichereau"}]},
+  {"cat": "Tanto Dori","grades": ["3d"],"attack": "Yokomen Uchi Gyakute","tech": "Shihonage","videos": [{"id": "rMkDuYwXsGo","by": "François Pichereau"}]},
+  {"cat": "Tanto Dori","grades": ["3d"],"attack": "Yokomen Uchi Gyakute","tech": "Naname Kokyu Nage","videos": [{"id": "xxx","by": "xxx","role": "xxx","missing": true}]},
+  {"cat": "Tanto Dori","grades": ["2d","3d"],"attack": "Tsuki Honte","tech": "Gokyo","videos": [{"id": "YKcREeOGeBg","by": "Paul Muller"}]},
+  {"cat": "Tanto Dori","grades": ["2d","3d"],"attack": "Tsuki Honte","tech": "Sankyo","videos": [{"id": "Xy_BIsbXAQE","by": "François Pichereau"},{"id": "ANHYfGxUyds","by": "Armen Hüsüman"}]},
+  {"cat": "Tanto Dori","grades": ["2d","3d"],"attack": "Tsuki Honte","tech": "Kotegaeshi","videos": [{"id": "cocSYV6xqCE","by": "Kükoshin Walsei"}]},
+  {"cat": "Tanto Dori","grades": ["2d","3d"],"attack": "Tsuki Honte","tech": "Hiji Kime Osae","videos": [{"id": "sxss0yxNu0w","by": "Kükoshin Walsei"}]},
+  {"cat": "Tanto Dori","grades": ["2d","3d"],"attack": "Tsuki Honte","tech": "Naname Kokyu Nage","videos": [{"id": "xxx","by": "xxx","role": "xxx","missing": true}]}
+];
+
+/* ------------------------------- Costanti ------------------------------- */
+const CATS = [
+  ["Suwari Waza","suwari"], ["Hanmi Handachi Waza","hanmi"], ["Tachi Waza","tachi"],
+  ["Ushiro Waza","ushiro"], ["Futari Dori","futari"], ["Randori","randori"],
+  ["Tanto Dori","tanto"]
+];
+const SLUG = new Map(CATS);
+const ROLES = {"o":"omote","u":"ura","o+u":"omote + ura","uci":"uchi","soto":"soto",
+               "int":"interno","ext":"esterno"};
+const $ = s => document.querySelector(s);
+const esc = s => String(s).replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const store = {
+  get(k, d){ try { const v = localStorage.getItem("aikido."+k); return v === null ? d : JSON.parse(v); } catch(e){ return d; } },
+  set(k, v){ try { localStorage.setItem("aikido."+k, JSON.stringify(v)); } catch(e){} }
+};
+const gradeKey   = g => g.endsWith("k") ? -parseInt(g,10) : 100 + parseInt(g,10);
+const gradeLabel = g => g.slice(0,-1) + (g.endsWith("k") ? "° kyu" : "° dan");
+const roleLabel  = r => ROLES[r] || r;
+const thumbURL   = id => "https://i.ytimg.com/vi/" + id + "/hqdefault.jpg";
+const watchURL   = id => "https://www.youtube.com/watch?v=" + id;
+const embedURL   = id => "https://www.youtube.com/embed/" + id + "?autoplay=1&rel=0";
+const EXPAND_SVG = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 3H3v6M15 3h6v6M21 15v6h-6M3 15v6h6"/></svg>';
+const fullName   = t => [t.cat, t.attack, t.tech].filter(Boolean).join(" ");
+
+/* Gradi presenti nei dati, ordinati kyu decrescenti poi dan crescenti. */
+const GRADES = [...new Set(DATA.flatMap(t => t.grades))].sort((a,b) => gradeKey(a) - gradeKey(b));
+
+/* Indice di ricerca: una stringa minuscola per tecnica. */
+const HAY = DATA.map(t => [t.cat, t.attack, t.tech, t.grades.join(" "),
+    t.grades.map(gradeLabel).join(" "),
+    t.videos.map(v => [v.by, roleLabel(v.role||""), v.note||""].join(" ")).join(" ")
+  ].join(" ").toLowerCase());
+
+/* --------------------------------- Stato --------------------------------- */
+const state = {
+  cats:  new Set((store.get("cats", CATS.map(c => c[0])) || []).filter(c => SLUG.has(c))),
+  grade: GRADES.includes(store.get("grade","")) ? store.get("grade","") : "",
+  q:     ""
+};
+if (!state.cats.size) state.cats = new Set(CATS.map(c => c[0]));
+let picked = null;
+
+/* ------------------------------- Rendering ------------------------------- */
+function thumbHTML(t, ti, vi){
+  const v = t.videos[vi];
+  const label = "Riproduci: " + fullName(t) + (v.by ? " — " + v.by : "");
+  return '<img loading="lazy" decoding="async" alt="" src="' + thumbURL(v.id) + '">' +
+      '<button class="play" type="button" aria-label="' + esc(label) + '">' +
+        '<i><svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M8 5l12 7-12 7z"/></svg></i></button>' +
+      '<button class="expand" type="button" aria-label="Apri a schermo grande">' + EXPAND_SVG + "</button>";
+}
+
+function videoHTML(t, ti, vi){
+  const v = t.videos[vi];
+  const meta = '<span class="vmeta">' +
+      (v.by ? '<span class="by">' + esc(v.by) + "</span>" : "") +
+      (v.role ? '<span class="role">' + esc(roleLabel(v.role)) + "</span>" : "") +
+      (v.note ? '<span class="note">' + esc(v.note) + "</span>" : "") +
+    "</span>";
+  if (v.missing) {
+    return '<div class="video"><div class="thumb missing"><span>video<br>non disponibile</span></div>' + meta + "</div>";
+  }
+  return '<div class="video" data-t="' + ti + '" data-v="' + vi + '">' +
+      '<div class="thumb">' + thumbHTML(t, ti, vi) + "</div>" + meta +
+    "</div>";
+}
+
+function cardHTML(t, i){
+  const slug = SLUG.get(t.cat) || "tachi";
+  const grades = t.grades.map(g =>
+    '<span class="g-tag ' + (g.endsWith("k") ? "g-kyu" : "g-dan") + '" title="' + esc(gradeLabel(g)) + '">' + esc(g) + "</span>").join("");
+  const vids = t.videos.map((_, vi) => videoHTML(t, i, vi)).join("");
+  const totalLabel = t.videos.length + " video";
+  return '<article class="card cat-' + slug + '" id="t' + i + '">' +
+      '<div class="card-top"><span class="cat"><i aria-hidden="true"></i>' + esc(t.cat) + "</span>" +
+        '<span class="gs">' + grades + "</span></div>" +
+      '<div class="attack-row">' +
+        (t.attack ? '<div class="attack">' + esc(t.attack) + "</div>" : "") +
+        '<div class="video-total">' + totalLabel + "</div>" +
+      "</div>" +
+      '<h4 class="tech" title="' + esc(t.tech) + '">' + esc(t.tech) + "</h4>" +
+      '<div class="videos">' + vids + "</div>" +
+    "</article>";
+}
+
+/* Raggruppa le tecniche per categoria (ordine fisso, come nel programma esami)
+   e, all'interno, per attacco (ordine di prima comparsa), rispecchiando
+   l'impaginazione verticale del PDF. */
+function buildCatalogHTML(){
+  let html = "";
+  for (const [catName, slug] of CATS){
+    const idxs = [];
+    for (let i = 0; i < DATA.length; i++) if (DATA[i].cat === catName) idxs.push(i);
+    if (!idxs.length) continue;
+
+    const groups = new Map();
+    for (const i of idxs){
+      const key = DATA[i].attack;
+      if (!groups.has(key)) groups.set(key, []);
+      groups.get(key).push(i);
+    }
+
+    let groupsHTML = "";
+    for (const [attack, gIdxs] of groups){
+      const cardsHTML = gIdxs.map(i => cardHTML(DATA[i], i)).join("");
+      groupsHTML += '<div class="attack-group">' +
+        (attack ? '<h3 class="attack-head">' + esc(attack) + "</h3>" : "") +
+        '<div class="cards">' + cardsHTML + "</div>" +
+      "</div>";
+    }
+    html += '<section class="cat-section cat-' + slug + '" data-cat="' + esc(catName) + '">' +
+      '<h2 class="cat-head"><i aria-hidden="true"></i>' + esc(catName) + "</h2>" +
+      groupsHTML +
+    "</section>";
+  }
+  return html;
+}
+
+const catalogEl = $("#catalog");
+catalogEl.innerHTML = buildCatalogHTML();
+const cardEls = DATA.map((_, i) => document.getElementById("t" + i));
+
+/* Dropdown filtri */
+$("#catPanel").innerHTML =
+  CATS.map(([name], idx) =>
+    '<label class="multi-option"><input type="checkbox" value="' + esc(name) + '"' +
+    (state.cats.has(name) ? " checked" : "") +
+    ' id="catOpt' + idx + '"> <span>' + esc(name) + "</span></label>").join("") +
+  '<div class="multi-actions"><button type="button" id="catAll">Tutte</button><button type="button" id="catNone">Nessuna</button></div>';
+$("#gradeSelect").insertAdjacentHTML("beforeend",
+  GRADES.map(g => '<option value="' + g + '">' + esc(g) + " · " + esc(gradeLabel(g)) + "</option>").join(""));
+$("#gradeSelect").value = state.grade;
+
+/* Video effettivamente guardabili per tecnica (esclusi i segnaposto). */
+const NVID = DATA.map(t => t.videos.filter(v => !v.missing).length);
+
+/* Statistiche */
+$("#sT").textContent = DATA.length;
+$("#sV").textContent = NVID.reduce((a,b) => a + b, 0);
+$("#sM").textContent = new Set(DATA.flatMap(t => t.videos.map(v => v.by).filter(Boolean))).size;
+
+/* -------------------------------- Filtri -------------------------------- */
+const toolbar = $("#toolbar"), countEl = $("#count"), emptyEl = $("#empty"), resetBtn = $("#resetBtn");
+const catToggle = $("#catToggle"), catPanel = $("#catPanel"), catSummary = $("#catSummary");
+
+function syncCatUI(){
+  const selected = CATS.map(([name]) => name).filter(name => state.cats.has(name));
+  catPanel.querySelectorAll('input[type="checkbox"]').forEach(input => {
+    input.checked = state.cats.has(input.value);
+  });
+  catToggle.setAttribute("aria-expanded", String(!catPanel.hidden));
+  catToggle.classList.toggle("open", !catPanel.hidden);
+  catSummary.textContent =
+    selected.length === CATS.length ? "Tutte le tecniche" :
+    selected.length === 0 ? "Nessuna tecnica" :
+    selected.length <= 2 ? selected.join(", ") :
+    selected.length + " tecniche selezionate";
+}
+
+function setAllCats(selected){
+  state.cats = new Set(selected ? CATS.map(([name]) => name) : []);
+}
+
+function setCatPanel(open){
+  catPanel.hidden = !open;
+  syncCatUI();
+}
+
+function apply(){
+  const tokens = state.q.toLowerCase().split(/\s+/).filter(Boolean);
+  let nT = 0, nV = 0;
+
+  for (let i = 0; i < DATA.length; i++){
+    const t = DATA[i];
+    const okCat = state.cats.has(t.cat);
+    const okGrade = !state.grade || t.grades.includes(state.grade);
+    const okText  = tokens.every(k => HAY[i].includes(k));
+    const show = okCat && okGrade && okText;
+    cardEls[i].classList.toggle("hide", !show);
+    if (show){ nT++; nV += NVID[i]; }
+  }
+
+  /* Nascondi i gruppi-attacco e le sezioni-categoria rimasti senza schede visibili. */
+  catalogEl.querySelectorAll(".attack-group").forEach(g => {
+    g.classList.toggle("hide", !g.querySelector(".card:not(.hide)"));
+  });
+  catalogEl.querySelectorAll(".cat-section").forEach(s => {
+    s.classList.toggle("hide", !s.querySelector(".card:not(.hide)"));
+  });
+
+  countEl.innerHTML = "<b>" + nT + "</b> " + (nT === 1 ? "tecnica" : "tecniche") + " · <b>" + nV + "</b> video";
+  emptyEl.hidden = nT > 0;
+  catalogEl.hidden = nT === 0;
+
+  const pristine = state.cats.size === CATS.length && !state.grade && !state.q;
+  resetBtn.hidden = pristine;
+  $("#qx").hidden = !state.q;
+  if (picked !== null && cardEls[picked].classList.contains("hide")) hidePick();
+
+  $("#gradeSelect").value = state.grade;
+  syncCatUI();
+  store.set("cats", [...state.cats]);
+  store.set("grade", state.grade);
+}
+
+function reset(){
+  setAllCats(true);
+  state.grade = ""; state.q = ""; $("#q").value = "";
+  setCatPanel(false);
+  apply();
+}
+
+catToggle.addEventListener("click", () => setCatPanel(catPanel.hidden));
+catPanel.addEventListener("change", e => {
+  const input = e.target.closest('input[type="checkbox"]');
+  if (!input) return;
+  input.checked ? state.cats.add(input.value) : state.cats.delete(input.value);
+  apply();
+});
+$("#catAll").addEventListener("click", () => { setAllCats(true); apply(); });
+$("#catNone").addEventListener("click", () => { setAllCats(false); apply(); });
+$("#gradeSelect").addEventListener("change", e => { state.grade = e.target.value; apply(); });
+$("#q").addEventListener("input", e => { state.q = e.target.value.trim(); apply(); });
+$("#qx").addEventListener("click", () => { state.q = ""; $("#q").value = ""; $("#q").focus(); apply(); });
+resetBtn.addEventListener("click", reset);
+$("#emptyReset").addEventListener("click", reset);
+document.addEventListener("click", e => {
+  if (!$("#catFilter").contains(e.target)) setCatPanel(false);
+});
+document.addEventListener("keydown", e => {
+  if (e.key === "Escape" && !catPanel.hidden) setCatPanel(false);
+});
+
+/* --------------------------- Tecnica casuale --------------------------- */
+function scrollToCard(i){
+  const el = cardEls[i];
+  const top = el.getBoundingClientRect().top + window.scrollY - toolbar.offsetHeight - 16;
+  window.scrollTo({ top: Math.max(0, top), behavior: "smooth" });
+  el.classList.remove("flash");
+  void el.offsetWidth;
+  el.classList.add("flash");
+}
+cardEls.forEach(c => c.addEventListener("animationend", () => c.classList.remove("flash")));
+
+function hidePick(){ picked = null; $("#pick").hidden = true; }
+
+/* L'estrazione si limita a evidenziare il nome nel banner: lo spostamento
+   alla scheda resta una scelta separata dell'utente (bottone "Vai alla scheda"). */
+$("#randBtn").addEventListener("click", () => {
+  const pool = [];
+  for (let i = 0; i < cardEls.length; i++) if (!cardEls[i].classList.contains("hide")) pool.push(i);
+  if (!pool.length) return;
+  picked = pool[Math.floor(Math.random() * pool.length)];
+  $("#pickName").textContent = fullName(DATA[picked]);
+  $("#pick").hidden = false;
+});
+$("#pickGoto").addEventListener("click", () => { if (picked !== null) scrollToCard(picked); });
+$("#pickYt").addEventListener("click", () => {
+  if (picked === null) return;
+  window.open("https://www.youtube.com/results?search_query=" + encodeURIComponent(fullName(DATA[picked])), "_blank", "noopener");
+});
+$("#pickX").addEventListener("click", hidePick);
+
+/* ------------------------------- Lightbox ------------------------------- */
+const lb = $("#lb"), lbFrame = $("#lbFrame");
+let lbList = [], lbPos = 0, lbReturn = null;
+
+function showLB(){
+  const v = lbList[lbPos], t = lbList.t;
+  lbFrame.src = embedURL(v.id);
+  $("#lbAttack").textContent = t.attack;
+  $("#lbAttack").hidden = !t.attack;
+  $("#lbTech").textContent = t.tech;
+  $("#lbCat").className = "cat lb-cat cat-" + (SLUG.get(t.cat) || "tachi");
+  $("#lbCat").style.setProperty("--c", "var(--c-" + (SLUG.get(t.cat) || "tachi") + ")");
+  $("#lbCatName").textContent = t.cat + " · " + t.grades.map(gradeLabel).join(", ");
+  $("#lbBy").innerHTML = (v.by ? "<strong>" + esc(v.by) + "</strong>" : "") +
+    (v.role ? '<span class="role" style="--c:var(--accent)">' + esc(roleLabel(v.role)) + "</span>" : "") +
+    (v.note ? '<span class="note" style="width:auto">' + esc(v.note) + "</span>" : "");
+  $("#lbYt").href = watchURL(v.id);
+  $("#lbPos").textContent = lbList.length > 1 ? (lbPos + 1) + " / " + lbList.length : "";
+  $("#lbPrev").disabled = lbPos === 0;
+  $("#lbNext").disabled = lbPos === lbList.length - 1;
+  $("#lbPrev").hidden = $("#lbNext").hidden = lbList.length < 2;
+}
+function openLB(ti, vi){
+  const t = DATA[ti];
+  lbList = t.videos.filter(v => !v.missing);
+  lbList.t = t;
+  lbPos = Math.max(0, lbList.indexOf(t.videos[vi]));
+  lbReturn = document.activeElement;
+  lb.hidden = false;
+  document.body.style.overflow = "hidden";
+  showLB();
+  $("#lbX").focus();
+}
+function closeLB(){
+  lb.hidden = true;
+  lbFrame.removeAttribute("src"); /* src="" ricaricherebbe la pagina stessa (URL relativo vuoto) */
+  document.body.style.overflow = "";
+  if (lbReturn && lbReturn.focus) lbReturn.focus();
+}
+$("#lbX").addEventListener("click", closeLB);
+$("#lbBd").addEventListener("click", closeLB);
+$("#lbPrev").addEventListener("click", () => { if (lbPos > 0){ lbPos--; showLB(); } });
+$("#lbNext").addEventListener("click", () => { if (lbPos < lbList.length - 1){ lbPos++; showLB(); } });
+
+/* ---------------------- Riproduzione video in scheda ---------------------- */
+/* Il video parte dentro la scheda stessa (più video possono essere in
+   riproduzione insieme); l'icona "espandi" apre lo stesso video nella
+   lightbox per guardarlo a schermo grande. */
+function playInline(videoEl){
+  const ti = +videoEl.dataset.t, vi = +videoEl.dataset.v;
+  const v = DATA[ti].videos[vi];
+  const thumb = videoEl.querySelector(".thumb");
+  thumb.innerHTML = '<iframe src="' + embedURL(v.id) + '" title="' + esc(fullName(DATA[ti])) +
+    '" allow="autoplay; encrypted-media; picture-in-picture; web-share" allowfullscreen></iframe>' +
+    '<button class="stop" type="button" aria-label="Ferma il video">&times;</button>';
+}
+function revertThumb(videoEl){
+  const ti = +videoEl.dataset.t, vi = +videoEl.dataset.v;
+  videoEl.querySelector(".thumb").innerHTML = thumbHTML(DATA[ti], ti, vi);
+}
+catalogEl.addEventListener("click", e => {
+  const stopBtn = e.target.closest(".stop");
+  if (stopBtn){ revertThumb(stopBtn.closest(".video")); return; }
+  const expandBtn = e.target.closest(".expand");
+  if (expandBtn){ const v = expandBtn.closest(".video"); openLB(+v.dataset.t, +v.dataset.v); return; }
+  const playBtn = e.target.closest(".play");
+  if (playBtn){ playInline(playBtn.closest(".video")); return; }
+});
+
+/* Immagini non disponibili (video rimosso da YouTube) */
+catalogEl.addEventListener("error", e => {
+  const img = e.target;
+  if (img.tagName !== "IMG") return;
+  const thumb = img.parentElement;
+  thumb.classList.add("missing");
+  thumb.innerHTML = "<span>anteprima<br>non disponibile</span>";
+}, true);
+
+/* --------------------------------- Tema --------------------------------- */
+const SUN = '<circle cx="12" cy="12" r="4.2"/><path d="M12 2.4v2.2M12 19.4v2.2M2.4 12h2.2M19.4 12h2.2M5.1 5.1l1.6 1.6M17.3 17.3l1.6 1.6M18.9 5.1l-1.6 1.6M6.7 17.3l-1.6 1.6"/>';
+const MOON = '<path d="M20.8 13.1A8.6 8.6 0 1110.9 3.2a6.9 6.9 0 009.9 9.9z"/>';
+function paintTheme(){
+  $("#themeIcon").innerHTML = document.documentElement.dataset.theme === "dark" ? SUN : MOON;
+}
+paintTheme();
+$("#themeBtn").addEventListener("click", () => {
+  const next = document.documentElement.dataset.theme === "dark" ? "light" : "dark";
+  document.documentElement.dataset.theme = next;
+  store.set("theme", next);
+  paintTheme();
+});
+
+/* ---------------------------- Tastiera ---------------------------- */
+document.addEventListener("keydown", e => {
+  if (!lb.hidden){
+    if (e.key === "Escape"){ closeLB(); }
+    else if (e.key === "ArrowLeft" && lbPos > 0){ lbPos--; showLB(); }
+    else if (e.key === "ArrowRight" && lbPos < lbList.length - 1){ lbPos++; showLB(); }
+    return;
+  }
+  const typing = /^(INPUT|TEXTAREA|SELECT)$/.test(document.activeElement.tagName);
+  if (e.key === "/" && !typing){ e.preventDefault(); $("#q").focus(); $("#q").select(); }
+  else if ((e.key === "r" || e.key === "R") && !typing && !e.metaKey && !e.ctrlKey){ $("#randBtn").click(); }
+  else if (e.key === "Escape" && typing && document.activeElement.id === "q"){
+    state.q = ""; $("#q").value = ""; $("#q").blur(); apply();
+  }
+});
+
+apply();
+</script>
+</body>
+</html>
