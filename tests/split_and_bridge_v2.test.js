@@ -26,7 +26,7 @@ test('Split & Bridge keeps the two fields synchronized with command parsing', ()
 test('Split & Bridge uses a compact single-row command layout', () => {
   assert.doesNotMatch(html, />Trasformazione</);
   assert.doesNotMatch(html, /id="selectionStatus"/);
-  assert.match(html, /Clic destro su 2 archi o inserisci gli ID\./);
+  assert.match(html, /Right-click 2 edges or enter their IDs\./);
   assert.match(html, /class="edge-command-row"/);
   assert.match(html, /grid-template-columns: 5rem 5rem auto/);
 });
@@ -66,4 +66,23 @@ test('settings opens as a fixed centered modal over the graph', () => {
   assert.match(html, /\.settings-drawer \{[\s\S]*?top: 50%;/);
   assert.match(html, /\.settings-drawer \{[\s\S]*?left: 50%;/);
   assert.match(html, /translate\(-50%, -50%\)/);
+});
+
+test('the visible application copy is in English', () => {
+  for (const phrase of [
+    'Waiting for graph',
+    'Interactive planar graph',
+    'Right-click 2 edges or enter their IDs.',
+    'Export DOT',
+    'Settings',
+    'Appearance',
+    'Physics',
+    'Reset to default',
+    'Transformation completed.'
+  ]) {
+    assert.match(html, new RegExp(phrase.replace(/[.*+?^${}()|[\\]\\]/g, '\\$&')));
+  }
+  for (const phrase of ['In attesa del grafo', 'Impostazioni', 'Esporta DOT', 'Trasformazione completata.']) {
+    assert.doesNotMatch(html, new RegExp(phrase));
+  }
 });

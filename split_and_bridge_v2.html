@@ -468,11 +468,11 @@
   <header class="app-header">
     <div class="app-header__meta">
       <h1 id="appTitle"><span class="brand">4CT</span> Split &amp; Bridge</h1>
-      <span id="graphStats" class="graph-stats">In attesa del grafo</span>
+      <span id="graphStats" class="graph-stats">Waiting for graph</span>
     </div>
   </header>
   <main class="workspace">
-    <div id="graph-container" aria-label="Grafo planare interattivo"></div>
+    <div id="graph-container" aria-label="Interactive planar graph"></div>
     <section class="command-card" id="group-transform" aria-labelledby="commandTitle">
       <h2 id="commandTitle">Split &amp; Bridge</h2>
       <div class="edge-command-row">
@@ -489,41 +489,41 @@
         </div>
       </div>
       <p id="actionStatus" class="action-status" aria-live="polite"></p>
-      <p class="interaction-hint">Clic destro su 2 archi o inserisci gli ID.</p>
+      <p class="interaction-hint">Right-click 2 edges or enter their IDs.</p>
     </section>
-    <nav id="toolDock" class="tool-dock" aria-label="Strumenti del grafo">
-      <label class="dock-toggle">Nodi<input type="checkbox" id="toggleNodeLabels" /></label>
-      <label class="dock-toggle">Archi<input type="checkbox" id="toggleEdgeLabels" /></label>
+    <nav id="toolDock" class="tool-dock" aria-label="Graph tools">
+      <label class="dock-toggle">Nodes<input type="checkbox" id="toggleNodeLabels" /></label>
+      <label class="dock-toggle">Edges<input type="checkbox" id="toggleEdgeLabels" /></label>
       <label class="dock-toggle">Debug<input type="checkbox" id="toggleDebug" /></label>
-      <button id="btnExportDot" type="button" class="secondary compact">Esporta DOT</button>
-      <button id="btnOpenSettings" type="button" class="quiet" aria-controls="settingsDrawer" aria-expanded="false">Parametri</button>
+      <button id="btnExportDot" type="button" class="secondary compact">Export DOT</button>
+      <button id="btnOpenSettings" type="button" class="quiet" aria-controls="settingsDrawer" aria-expanded="false">Settings</button>
     </nav>
     <div id="settingsBackdrop" class="settings-backdrop" hidden></div>
     <aside id="settingsDrawer" class="settings-drawer" aria-hidden="true" aria-labelledby="settingsTitle" inert>
       <div class="drawer-header">
-        <h2 id="settingsTitle">Impostazioni</h2>
-        <button id="btnCloseSettings" type="button" class="quiet" aria-label="Chiudi impostazioni">Chiudi</button>
+        <h2 id="settingsTitle">Settings</h2>
+        <button id="btnCloseSettings" type="button" class="quiet" aria-label="Close settings">Close</button>
       </div>
       <div id="controls">
         <section class="drawer-section" id="group-appearance" aria-labelledby="appearanceTitle">
-          <h3 id="appearanceTitle" class="drawer-section-title">Aspetto</h3>
+          <h3 id="appearanceTitle" class="drawer-section-title">Appearance</h3>
           <div class="config-grid">
-            <div class="field"><label class="field-label" for="cfgEdgeWidth">Spessore archi</label><div class="control-row"><input id="cfgEdgeWidth" type="number" min="1" step="1" value="1" /><button type="button" class="reset-btn" data-reset-target="cfgEdgeWidth" aria-label="Ripristina valore predefinito" title="Ripristina valore predefinito">↺</button></div></div>
-            <div class="field"><label class="field-label" for="cfgNodeWidth">Dimensione nodi</label><div class="control-row"><input id="cfgNodeWidth" type="number" min="2" step="1" value="5" /><button type="button" class="reset-btn" data-reset-target="cfgNodeWidth" aria-label="Ripristina valore predefinito" title="Ripristina valore predefinito">↺</button></div></div>
-            <div class="field"><label class="field-label" for="cfgNodeLabelFontSize">Dimensione caratteri nodi</label><div class="control-row"><input id="cfgNodeLabelFontSize" type="number" min="8" step="1" value="11" /><button type="button" class="reset-btn" data-reset-target="cfgNodeLabelFontSize" aria-label="Ripristina valore predefinito" title="Ripristina valore predefinito">↺</button></div></div>
-            <div class="field"><label class="field-label" for="cfgEdgeLabelFontSize">Dimensione caratteri archi</label><div class="control-row"><input id="cfgEdgeLabelFontSize" type="number" min="7" step="1" value="9" /><button type="button" class="reset-btn" data-reset-target="cfgEdgeLabelFontSize" aria-label="Ripristina valore predefinito" title="Ripristina valore predefinito">↺</button></div></div>
-            <div class="field"><label class="field-label" for="cfgNodeColor">Colore nodi</label><div class="control-row"><input id="cfgNodeColor" type="color" value="#33cc66" /><button type="button" class="reset-btn" data-reset-target="cfgNodeColor" aria-label="Ripristina valore predefinito" title="Ripristina valore predefinito">↺</button></div></div>
-            <div class="field"><label class="field-label" for="cfgEdgeColor">Colore archi</label><div class="control-row"><input id="cfgEdgeColor" type="color" value="#999999" /><button type="button" class="reset-btn" data-reset-target="cfgEdgeColor" aria-label="Ripristina valore predefinito" title="Ripristina valore predefinito">↺</button></div></div>
+            <div class="field"><label class="field-label" for="cfgEdgeWidth">Edge width</label><div class="control-row"><input id="cfgEdgeWidth" type="number" min="1" step="1" value="1" /><button type="button" class="reset-btn" data-reset-target="cfgEdgeWidth" aria-label="Reset to default" title="Reset to default">↺</button></div></div>
+            <div class="field"><label class="field-label" for="cfgNodeWidth">Node size</label><div class="control-row"><input id="cfgNodeWidth" type="number" min="2" step="1" value="5" /><button type="button" class="reset-btn" data-reset-target="cfgNodeWidth" aria-label="Reset to default" title="Reset to default">↺</button></div></div>
+            <div class="field"><label class="field-label" for="cfgNodeLabelFontSize">Node label size</label><div class="control-row"><input id="cfgNodeLabelFontSize" type="number" min="8" step="1" value="9" /><button type="button" class="reset-btn" data-reset-target="cfgNodeLabelFontSize" aria-label="Reset to default" title="Reset to default">↺</button></div></div>
+            <div class="field"><label class="field-label" for="cfgEdgeLabelFontSize">Edge label size</label><div class="control-row"><input id="cfgEdgeLabelFontSize" type="number" min="7" step="1" value="9" /><button type="button" class="reset-btn" data-reset-target="cfgEdgeLabelFontSize" aria-label="Reset to default" title="Reset to default">↺</button></div></div>
+            <div class="field"><label class="field-label" for="cfgNodeColor">Node color</label><div class="control-row"><input id="cfgNodeColor" type="color" value="#33cc66" /><button type="button" class="reset-btn" data-reset-target="cfgNodeColor" aria-label="Reset to default" title="Reset to default">↺</button></div></div>
+            <div class="field"><label class="field-label" for="cfgEdgeColor">Edge color</label><div class="control-row"><input id="cfgEdgeColor" type="color" value="#999999" /><button type="button" class="reset-btn" data-reset-target="cfgEdgeColor" aria-label="Reset to default" title="Reset to default">↺</button></div></div>
           </div>
         </section>
         <section class="drawer-section" id="group-physics" aria-labelledby="physicsTitle">
-          <h3 id="physicsTitle" class="drawer-section-title">Fisica</h3>
+          <h3 id="physicsTitle" class="drawer-section-title">Physics</h3>
           <div class="config-grid">
-            <div class="field"><label class="field-label" for="cfgPhysicsSpringLength">Lunghezza molle</label><div class="control-row"><input id="cfgPhysicsSpringLength" type="number" min="0" step="1" value="1" /><button type="button" class="reset-btn" data-reset-target="cfgPhysicsSpringLength" aria-label="Ripristina valore predefinito" title="Ripristina valore predefinito">↺</button></div></div>
-            <div class="field"><label class="field-label" for="cfgPhysicsRepulsion">Repulsione</label><div class="control-row"><input id="cfgPhysicsRepulsion" type="number" min="0" step="1" value="0" /><button type="button" class="reset-btn" data-reset-target="cfgPhysicsRepulsion" aria-label="Ripristina valore predefinito" title="Ripristina valore predefinito">↺</button></div></div>
-            <div class="field"><label class="field-label" for="cfgPhysicsSpringStrength">Forza molle</label><div class="control-row"><input id="cfgPhysicsSpringStrength" type="number" min="0" step="1" value="2" /><button type="button" class="reset-btn" data-reset-target="cfgPhysicsSpringStrength" aria-label="Ripristina valore predefinito" title="Ripristina valore predefinito">↺</button></div></div>
-            <div class="field"><label class="field-label" for="cfgPhysicsDamping">Smorzamento</label><div class="control-row"><input id="cfgPhysicsDamping" type="number" min="0" max="1" step="0.01" value="0" /><button type="button" class="reset-btn" data-reset-target="cfgPhysicsDamping" aria-label="Ripristina valore predefinito" title="Ripristina valore predefinito">↺</button></div></div>
-            <div class="field"><label class="field-label" for="cfgPhysicsMaxVelocity">Velocità massima</label><div class="control-row"><input id="cfgPhysicsMaxVelocity" type="number" min="1" step="1" value="5" /><button type="button" class="reset-btn" data-reset-target="cfgPhysicsMaxVelocity" aria-label="Ripristina valore predefinito" title="Ripristina valore predefinito">↺</button></div></div>
+            <div class="field"><label class="field-label" for="cfgPhysicsSpringLength">Spring length</label><div class="control-row"><input id="cfgPhysicsSpringLength" type="number" min="0" step="1" value="1" /><button type="button" class="reset-btn" data-reset-target="cfgPhysicsSpringLength" aria-label="Reset to default" title="Reset to default">↺</button></div></div>
+            <div class="field"><label class="field-label" for="cfgPhysicsRepulsion">Repulsion</label><div class="control-row"><input id="cfgPhysicsRepulsion" type="number" min="0" step="1" value="0" /><button type="button" class="reset-btn" data-reset-target="cfgPhysicsRepulsion" aria-label="Reset to default" title="Reset to default">↺</button></div></div>
+            <div class="field"><label class="field-label" for="cfgPhysicsSpringStrength">Spring strength</label><div class="control-row"><input id="cfgPhysicsSpringStrength" type="number" min="0" step="1" value="2" /><button type="button" class="reset-btn" data-reset-target="cfgPhysicsSpringStrength" aria-label="Reset to default" title="Reset to default">↺</button></div></div>
+            <div class="field"><label class="field-label" for="cfgPhysicsDamping">Damping</label><div class="control-row"><input id="cfgPhysicsDamping" type="number" min="0" max="1" step="0.01" value="0" /><button type="button" class="reset-btn" data-reset-target="cfgPhysicsDamping" aria-label="Reset to default" title="Reset to default">↺</button></div></div>
+            <div class="field"><label class="field-label" for="cfgPhysicsMaxVelocity">Maximum velocity</label><div class="control-row"><input id="cfgPhysicsMaxVelocity" type="number" min="1" step="1" value="5" /><button type="button" class="reset-btn" data-reset-target="cfgPhysicsMaxVelocity" aria-label="Reset to default" title="Reset to default">↺</button></div></div>
           </div>
         </section>
       </div>
@@ -615,7 +615,7 @@
     function updateGraphStats() {
       const element = document.getElementById('graphStats');
       if (!element || !state.graph) return;
-      element.textContent = `${state.graph.order} nodi · ${state.graph.size} archi`;
+      element.textContent = `${state.graph.order} nodes · ${state.graph.size} edges`;
     }
 
     function setActionStatus(message, tone = 'neutral') {
@@ -647,8 +647,8 @@
       const partsA = rawA.split(',').map(token => token.trim()).filter(Boolean);
       const partsB = rawB.split(',').map(token => token.trim()).filter(Boolean);
       if (partsA.length !== 1 || partsB.length !== 1) {
-        const message = 'Inserisci un ID in ciascun campo edge.';
-        debug('info', 'Inserire un ID per ciascuna edge.');
+        const message = 'Enter one ID in each edge field.';
+        debug('info', 'Enter one ID for each edge.');
         setActionStatus(message, 'error');
         return { ok: false, message };
       }
@@ -689,8 +689,8 @@
       const missing = missingGraphDependencies(globalObject);
       if (missing.length) {
         showGraphStartupFailure(
-          `Impossibile inizializzare il grafo: dipendenze non disponibili (${missing.join(', ')}). ` +
-          'Controlla la connessione e ricarica la pagina.'
+          `Unable to initialize graph: dependencies unavailable (${missing.join(', ')}). ` +
+          'Check your connection and reload the page.'
         );
         return false;
       }
@@ -699,8 +699,8 @@
         setGraphActionsEnabled(true);
         return true;
       } catch (error) {
-        const detail = error && error.message ? error.message : 'errore sconosciuto';
-        showGraphStartupFailure(`Impossibile inizializzare il grafo: ${detail}`);
+        const detail = error && error.message ? error.message : 'unknown error';
+        showGraphStartupFailure(`Unable to initialize graph: ${detail}`);
         if (typeof console !== 'undefined') console.error(error);
         return false;
       }
@@ -711,13 +711,13 @@
       if (graphDiagnosticsInstalled) return;
       graphDiagnosticsInstalled = true;
       globalObject.addEventListener('error', event => {
-        const detail = event && event.message ? event.message : 'errore JavaScript';
-        showGraphStartupFailure(`Errore imprevisto: ${detail}`);
+        const detail = event && event.message ? event.message : 'JavaScript error';
+        showGraphStartupFailure(`Unexpected error: ${detail}`);
       });
       globalObject.addEventListener('unhandledrejection', event => {
         const reason = event && event.reason;
-        const detail = reason && reason.message ? reason.message : String(reason || 'promessa rifiutata');
-        showGraphStartupFailure(`Errore imprevisto: ${detail}`);
+        const detail = reason && reason.message ? reason.message : String(reason || 'rejected promise');
+        showGraphStartupFailure(`Unexpected error: ${detail}`);
       });
     }
 
@@ -1280,20 +1280,20 @@
       debug('splitAndBridge.begin', `${tokA},${tokB}`);
       const { graph } = state;
       const keyA = findEdgeKeyFromUserToken(tokA);
-      if (!keyA) { debug('info', `Edge "${tokA}" non trovata.`); return; }
+      if (!keyA) { debug('info', `Edge "${tokA}" not found.`); return; }
       const keyB = findEdgeKeyFromUserToken(tokB);
-      if (!keyB) { debug('info', `Edge "${tokB}" non trovata.`); return; }
+      if (!keyB) { debug('info', `Edge "${tokB}" not found.`); return; }
       const sameEdge = keyA === keyB;
 
       if (sameEdge) {
-        debug('info', `Modalità edge singola: trasformo due volte la stessa edge (chiave ${keyA}).`);
+        debug('info', `Single-edge mode: splitting the same edge twice (key ${keyA}).`);
         const firstSplit = splitEdge(keyA);
-        if (!firstSplit) { debug('info', 'Split fallito.'); return; }
+        if (!firstSplit) { debug('info', 'Split failed.'); return; }
         const s = firstSplit.midNode;
 
         const edgeToSplitAgain = firstSplit.newEdges[0];
         const secondSplit = splitEdge(edgeToSplitAgain);
-        if (!secondSplit) { debug('info', 'Secondo split fallito.'); return; }
+        if (!secondSplit) { debug('info', 'Second split failed.'); return; }
         const t = secondSplit.midNode;
 
         const existing = countEdgesBetween(s, t);
@@ -1307,19 +1307,19 @@
         // Always force geometry update for these specific edges
         updateParallelEdgeGeometry(s, t);
 
-        debug('info', `Creati nodi ${s} e ${t}. Edge parallele totali=${existing + created.length} (aggiunte: ${created.join(', ')}).`);
+        debug('info', `Created nodes ${s} and ${t}. Total parallel edges=${existing + created.length} (added: ${created.join(', ')}).`);
       } else {
-        debug('info', `Trasformo edge ${keyA} e ${keyB}.`);
+        debug('info', `Transforming edges ${keyA} and ${keyB}.`);
         const resA = splitEdge(keyA);
-        if (!resA) { debug('info', 'Split prima edge fallito.'); return; }
+        if (!resA) { debug('info', 'First edge split failed.'); return; }
         const s = resA.midNode;
         const resB = splitEdge(keyB);
-        if (!resB) { debug('info', 'Split seconda edge fallito.'); return; }
+        if (!resB) { debug('info', 'Second edge split failed.'); return; }
         const t = resB.midNode;
 
         addEdgeAuto(s, t);
         updateParallelEdgeGeometry(s, t);
-        debug('info', `Aggiunta edge bridge ${s}-${t}.`);
+        debug('info', `Added bridge edge ${s}-${t}.`);
       }
 
       // Force update of ALL parallel edges in the graph
@@ -1337,32 +1337,32 @@
       const { graph } = state;
       const keyA = findEdgeKeyFromUserToken(tokA);
       if (!keyA) {
-        const message = `Arco "${tokA}" non trovato.`;
+        const message = `Edge "${tokA}" not found.`;
         debug('info', message);
         return { ok: false, message };
       }
       const keyB = findEdgeKeyFromUserToken(tokB);
       if (!keyB) {
-        const message = `Arco "${tokB}" non trovato.`;
+        const message = `Edge "${tokB}" not found.`;
         debug('info', message);
         return { ok: false, message };
       }
       const sameEdge = keyA === keyB;
 
       if (sameEdge) {
-        debug('info', `Modalità edge singola: trasformo due volte la stessa edge (chiave ${keyA}).`);
+        debug('info', `Single-edge mode: splitting the same edge twice (key ${keyA}).`);
         const firstSplit = splitEdge(keyA);
         if (!firstSplit) {
-          debug('info', `Split fallito per l’arco ${keyA}.`);
-          return { ok: false, message: 'Impossibile dividere l’arco selezionato.' };
+          debug('info', `Split failed for edge ${keyA}.`);
+          return { ok: false, message: 'Unable to split the selected edge.' };
         }
         const s = firstSplit.midNode;
 
         const edgeToSplitAgain = firstSplit.newEdges[0];
         const secondSplit = splitEdge(edgeToSplitAgain);
         if (!secondSplit) {
-          debug('info', `Secondo split fallito per l’arco ${edgeToSplitAgain}.`);
-          return { ok: false, message: 'Impossibile dividere l’arco selezionato.' };
+          debug('info', `Second split failed for edge ${edgeToSplitAgain}.`);
+          return { ok: false, message: 'Unable to split the selected edge.' };
         }
         const t = secondSplit.midNode;
 
@@ -1377,25 +1377,25 @@
         // Always force geometry update for these specific edges
         updateParallelEdgeGeometry(s, t);
 
-        debug('info', `Creati nodi ${s} e ${t}. Edge parallele totali=${existing + created.length} (aggiunte: ${created.join(', ')}).`);
+        debug('info', `Created nodes ${s} and ${t}. Total parallel edges=${existing + created.length} (added: ${created.join(', ')}).`);
       } else {
-        debug('info', `Trasformo edge ${keyA} e ${keyB}.`);
+        debug('info', `Transforming edges ${keyA} and ${keyB}.`);
         const resA = splitEdge(keyA);
         if (!resA) {
-          debug('info', `Split della prima edge ${keyA} fallito.`);
-          return { ok: false, message: 'Impossibile dividere l’arco selezionato.' };
+          debug('info', `First edge split failed for ${keyA}.`);
+          return { ok: false, message: 'Unable to split the selected edge.' };
         }
         const s = resA.midNode;
         const resB = splitEdge(keyB);
         if (!resB) {
-          debug('info', `Split della seconda edge ${keyB} fallito.`);
-          return { ok: false, message: 'Impossibile dividere l’arco selezionato.' };
+          debug('info', `Second edge split failed for ${keyB}.`);
+          return { ok: false, message: 'Unable to split the selected edge.' };
         }
         const t = resB.midNode;
 
         addEdgeAuto(s, t);
         updateParallelEdgeGeometry(s, t);
-        debug('info', `Aggiunta edge bridge ${s}-${t}.`);
+        debug('info', `Added bridge edge ${s}-${t}.`);
       }
 
       // Rimosso per evitare di alterare la geometria di archi non coinvolti
@@ -1407,7 +1407,7 @@
       ensurePhysicsVelocities();
       startPhysics();
       debug('splitAndBridge.end');
-      return { ok: true, message: 'Trasformazione completata.' };
+      return { ok: true, message: 'Transformation completed.' };
     }
 
     function exportToDot() {
@@ -2271,15 +2271,15 @@
           fixed++;
         }
       });
-      if (fixed) debug('init.fixEdges', `controlPointDistances aggiunti a ${fixed} edge`);
+      if (fixed) debug('init.fixEdges', `Added controlPointDistances to ${fixed} edges`);
       return fixed;
     }
 
     function runInitializationDiagnostics(phase = 'initial') {
       const issues = [];
-      if (!state.graph) issues.push('graph assente');
-      if (state.graph && state.graph.order === 0) issues.push('nessun nodo');
-      if (!state.cy) issues.push('renderer Cytoscape non creato');
+      if (!state.graph) issues.push('graph missing');
+      if (state.graph && state.graph.order === 0) issues.push('no nodes');
+      if (!state.cy) issues.push('Cytoscape renderer not created');
 
       let missingPos = 0;
       if (state.graph) {
@@ -2290,16 +2290,16 @@
           }
         });
       }
-      if (missingPos) issues.push(`nodi senza posizione: ${missingPos}`);
+      if (missingPos) issues.push(`nodes without position: ${missingPos}`);
 
       const fixed = ensureEdgeGeometryAttributes();
-      if (fixed) issues.push(`edge geometry riparata: ${fixed}`);
+      if (fixed) issues.push(`edge geometry repaired: ${fixed}`);
 
       if (state.cy) {
         const cyNodeCount = state.cy.nodes().length;
         const cyEdgeCount = state.cy.edges().length;
-        if (cyNodeCount !== state.graph.order) issues.push(`mismatch nodi (graph=${state.graph.order}, cy=${cyNodeCount})`);
-        if (cyEdgeCount !== state.graph.size) issues.push(`mismatch edge (graph=${state.graph.size}, cy=${cyEdgeCount})`);
+        if (cyNodeCount !== state.graph.order) issues.push(`node mismatch (graph=${state.graph.order}, cy=${cyNodeCount})`);
+        if (cyEdgeCount !== state.graph.size) issues.push(`edge mismatch (graph=${state.graph.size}, cy=${cyEdgeCount})`);
       }
 
       if (!issues.length) {
