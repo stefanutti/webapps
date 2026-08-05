@@ -28,11 +28,15 @@ test('Split & Bridge uses a compact single-row command layout', () => {
   assert.doesNotMatch(html, /id="selectionStatus"/);
   assert.match(html, /Clic destro su 2 archi o inserisci gli ID\./);
   assert.match(html, /class="edge-command-row"/);
-  assert.match(html, /grid-template-columns: repeat\(2, minmax\(0, 1fr\)\) auto/);
+  assert.match(html, /grid-template-columns: 5rem 5rem auto/);
 });
 
 test('Split & Bridge uses numeric edge labels and a compact button label', () => {
   assert.match(html, />Edge 1</);
   assert.match(html, />Edge 2</);
   assert.match(html, /<button id="btnSplitEdges" type="button">S&amp;B<\/button>/);
+});
+
+test('Split & Bridge keeps edge inputs narrow beside the button', () => {
+  assert.match(html, /grid-template-columns: 5rem 5rem auto/);
 });
