@@ -22,3 +22,11 @@ test('Split & Bridge keeps the two fields synchronized with command parsing', ()
   assert.match(html, /const rawB = inputB \? inputB\.value : ''/);
   assert.match(html, /splitAndBridgeEdges\(partsA\[0\], partsB\[0\]\)/);
 });
+
+test('Split & Bridge uses a compact single-row command layout', () => {
+  assert.doesNotMatch(html, />Trasformazione</);
+  assert.doesNotMatch(html, /id="selectionStatus"/);
+  assert.match(html, /Clic destro su 2 archi o inserisci gli ID\./);
+  assert.match(html, /class="edge-command-row"/);
+  assert.match(html, /grid-template-columns: repeat\(2, minmax\(0, 1fr\)\) auto/);
+});
