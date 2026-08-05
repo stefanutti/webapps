@@ -729,6 +729,7 @@ const roleLabel  = r => ROLES[r] || r;
 const thumbURL   = id => "https://i.ytimg.com/vi/" + id + "/hqdefault.jpg";
 const watchURL   = id => "https://www.youtube.com/watch?v=" + id;
 const embedURL   = id => "https://www.youtube.com/embed/" + id + "?autoplay=1&rel=0&playsinline=1";
+const isTouchDevice = window.matchMedia("(hover: none) and (pointer: coarse)").matches;
 const EXPAND_SVG = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 3H3v6M15 3h6v6M21 15v6h-6M3 15v6h6"/></svg>';
 const fullName   = t => [t.cat, t.attack, t.tech].filter(Boolean).join(" ");
 
@@ -1031,13 +1032,24 @@ function revertThumb(videoEl){
   const ti = +videoEl.dataset.t, vi = +videoEl.dataset.v;
   videoEl.querySelector(".thumb").innerHTML = thumbHTML(DATA[ti], ti, vi);
 }
+function openTouchVideo(videoEl){
+  const ti = +videoEl.dataset.t, vi = +videoEl.dataset.v;
+  const url = watchURL(DATA[ti].videos[vi].id);
+  const opened = window.open(url, "_blank", "noopener,noreferrer");
+  if (!opened) window.location.assign(url);
+}
 catalogEl.addEventListener("click", e => {
   const stopBtn = e.target.closest(".stop");
   if (stopBtn){ revertThumb(stopBtn.closest(".video")); return; }
   const expandBtn = e.target.closest(".expand");
   if (expandBtn){ const v = expandBtn.closest(".video"); openLB(+v.dataset.t, +v.dataset.v); return; }
   const playBtn = e.target.closest(".play");
-  if (playBtn){ playInline(playBtn.closest(".video")); return; }
+  if (playBtn){
+    const videoEl = playBtn.closest(".video");
+    if (isTouchDevice) openTouchVideo(videoEl);
+    else playInline(videoEl);
+    return;
+  }
 });
 
 /* Immagini non disponibili (video rimosso da YouTube) */
