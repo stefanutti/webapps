@@ -40,3 +40,7 @@ test('Split & Bridge uses numeric edge labels and a compact button label', () =>
 test('Split & Bridge keeps edge inputs narrow beside the button', () => {
   assert.match(html, /grid-template-columns: 5rem 5rem auto/);
 });
+
+test('Split & Bridge uses a compact outer panel', () => {
+  assert.match(html, /width: min\(16rem, calc\(100% - 2rem\)\)/);
+});
