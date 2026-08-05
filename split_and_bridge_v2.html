@@ -147,9 +147,10 @@
       gap: .38rem;
     }
 
-    .edge-input-grid {
+    .edge-command-row {
       display: grid;
-      grid-template-columns: repeat(2, minmax(0, 1fr));
+      grid-template-columns: repeat(2, minmax(0, 1fr)) auto;
+      align-items: end;
       gap: .5rem;
     }
 
@@ -173,18 +174,13 @@
     }
 
     .command-card .command-actions {
-      margin-top: .55rem;
+      margin-top: 0;
     }
 
-    .selection-status,
     .interaction-hint {
       margin: .5rem 0 0;
       color: var(--muted);
       font-size: .72rem;
-    }
-
-    .selection-status {
-      color: var(--ink);
     }
 
     .tool-dock {
@@ -445,7 +441,7 @@
     }
 
     @media (max-width: 420px) {
-      .edge-input-grid {
+      .edge-command-row {
         grid-template-columns: 1fr;
       }
     }
@@ -476,9 +472,8 @@
   <main class="workspace">
     <div id="graph-container" aria-label="Grafo planare interattivo"></div>
     <section class="command-card" id="group-transform" aria-labelledby="commandTitle">
-      <p class="eyebrow">Trasformazione</p>
       <h2 id="commandTitle">Split &amp; Bridge</h2>
-      <div class="edge-input-grid">
+      <div class="edge-command-row">
         <div class="field">
           <label class="field-label" for="edgeSplitInputA">Primo edge</label>
           <input id="edgeSplitInputA" type="text" placeholder="0" autocomplete="off" />
@@ -487,13 +482,12 @@
           <label class="field-label" for="edgeSplitInputB">Seconda edge</label>
           <input id="edgeSplitInputB" type="text" placeholder="1" autocomplete="off" />
         </div>
-      </div>
-      <p id="selectionStatus" class="selection-status" aria-live="polite">0 di 2 archi selezionati</p>
-      <div class="command-actions">
-        <button id="btnSplitEdges" type="button">Split &amp; Bridge</button>
+        <div class="command-actions">
+          <button id="btnSplitEdges" type="button">Split &amp; Bridge</button>
+        </div>
       </div>
       <p id="actionStatus" class="action-status" aria-live="polite"></p>
-      <p class="interaction-hint">Seleziona due archi con il clic destro oppure inserisci gli ID.</p>
+      <p class="interaction-hint">Clic destro su 2 archi o inserisci gli ID.</p>
     </section>
     <nav id="toolDock" class="tool-dock" aria-label="Strumenti del grafo">
       <label class="dock-toggle">Nodi<input type="checkbox" id="toggleNodeLabels" /></label>
@@ -632,11 +626,9 @@
     function updateSplitSelectionUi(tokens = []) {
       const inputA = document.getElementById('edgeSplitInputA');
       const inputB = document.getElementById('edgeSplitInputB');
-      const status = document.getElementById('selectionStatus');
       const normalizedTokens = Array.isArray(tokens) ? tokens : [];
       if (inputA) inputA.value = normalizedTokens[0] || '';
       if (inputB) inputB.value = normalizedTokens[1] || '';
-      if (status) status.textContent = `${normalizedTokens.length} di 2 archi selezionati`;
     }
 
     function clearSplitEdgeSelection() {
