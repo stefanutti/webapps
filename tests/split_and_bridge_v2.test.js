@@ -14,3 +14,11 @@ test('Split & Bridge exposes two separate edge fields', () => {
   assert.match(html, /getElementById\('edgeSplitInputA'\)/);
   assert.match(html, /getElementById\('edgeSplitInputB'\)/);
 });
+
+test('Split & Bridge keeps the two fields synchronized with command parsing', () => {
+  assert.match(html, /inputA\.value = normalizedTokens\[0\]/);
+  assert.match(html, /inputB\.value = normalizedTokens\[1\]/);
+  assert.match(html, /const rawA = inputA \? inputA\.value : ''/);
+  assert.match(html, /const rawB = inputB \? inputB\.value : ''/);
+  assert.match(html, /splitAndBridgeEdges\(partsA\[0\], partsB\[0\]\)/);
+});
