@@ -50,3 +50,12 @@ test('node labels are plain and match the default edge label size', () => {
   assert.doesNotMatch(html, /'text-background-color': '#171d23'/);
   assert.doesNotMatch(html, /'text-border-color': '#34414c'/);
 });
+
+test('node labels sit above vertices with the edge-label outline effect', () => {
+  assert.match(html, /'text-valign': 'top'/);
+  assert.match(html, /'text-halign': 'center'/);
+  assert.match(html, /'text-margin-y': -2/);
+  assert.match(html, /'text-outline-color': '#11161b'/);
+  assert.match(html, /'text-outline-width': 2/);
+  assert.match(html, /'text-outline-opacity': 1/);
+});
