@@ -30,3 +30,9 @@ test('Split & Bridge uses a compact single-row command layout', () => {
   assert.match(html, /class="edge-command-row"/);
   assert.match(html, /grid-template-columns: repeat\(2, minmax\(0, 1fr\)\) auto/);
 });
+
+test('Split & Bridge uses numeric edge labels and a compact button label', () => {
+  assert.match(html, />Edge 1</);
+  assert.match(html, />Edge 2</);
+  assert.match(html, /<button id="btnSplitEdges" type="button">S&amp;B<\/button>/);
+});
