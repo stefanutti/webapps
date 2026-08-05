@@ -89,7 +89,17 @@ test('the visible application copy is in English', () => {
 
 test('the main toolbar exposes a physics toggle', () => {
   assert.match(html, /Physics<input type="checkbox" id="togglePhysics" \/>/);
-  assert.match(html, /physicsEnabled: true/);
+  assert.match(html, /physicsEnabled: false/);
   assert.match(html, /function setPhysicsEnabled\(enabled\)/);
   assert.match(html, /if \(state && state\.physicsEnabled === false\) return;/);
+});
+
+test('enabled physics has active defaults and is not stopped by a timer', () => {
+  assert.match(html, /repulsion: 0\.002/);
+  assert.match(html, /springStrength: 2\.08/);
+  assert.match(html, /springLength: 1\.2/);
+  assert.match(html, /damping: 0\.3/);
+  assert.match(html, /id="cfgPhysicsRepulsion"[^>]*step="0\.001"[^>]*value="0\.002"/);
+  assert.match(html, /id="cfgPhysicsDamping"[^>]*value="0\.3"/);
+  assert.doesNotMatch(html, /physics\.stopTimer = window\.setTimeout\(\(\) =>/);
 });
