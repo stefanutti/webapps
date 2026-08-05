@@ -44,3 +44,9 @@ test('Split & Bridge keeps edge inputs narrow beside the button', () => {
 test('Split & Bridge uses a compact outer panel', () => {
   assert.match(html, /width: min\(16rem, calc\(100% - 2rem\)\)/);
 });
+
+test('node labels are plain and match the default edge label size', () => {
+  assert.match(html, /nodeLabelFontSize: 9/);
+  assert.doesNotMatch(html, /'text-background-color': '#171d23'/);
+  assert.doesNotMatch(html, /'text-border-color': '#34414c'/);
+});
