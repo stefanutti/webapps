@@ -86,3 +86,10 @@ test('the visible application copy is in English', () => {
     assert.doesNotMatch(html, new RegExp(phrase));
   }
 });
+
+test('the main toolbar exposes a physics toggle', () => {
+  assert.match(html, /Physics<input type="checkbox" id="togglePhysics" \/>/);
+  assert.match(html, /physicsEnabled: true/);
+  assert.match(html, /function setPhysicsEnabled\(enabled\)/);
+  assert.match(html, /if \(state && state\.physicsEnabled === false\) return;/);
+});

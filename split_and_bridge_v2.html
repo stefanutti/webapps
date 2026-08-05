@@ -493,6 +493,7 @@
     </section>
     <nav id="toolDock" class="tool-dock" aria-label="Graph tools">
       <label class="dock-toggle">Nodes<input type="checkbox" id="toggleNodeLabels" /></label>
+      <label class="dock-toggle">Physics<input type="checkbox" id="togglePhysics" /></label>
       <label class="dock-toggle">Edges<input type="checkbox" id="toggleEdgeLabels" /></label>
       <label class="dock-toggle">Debug<input type="checkbox" id="toggleDebug" /></label>
       <button id="btnExportDot" type="button" class="secondary compact">Export DOT</button>
@@ -772,6 +773,7 @@
         nextEdgeId: 0,
         showNodeLabels: false,
         showEdgeLabels: true,
+        physicsEnabled: true,
         initialized: false,
         currentLayout: 'preset',
         edgeBendDrag: null,
@@ -1029,6 +1031,7 @@
     // Avvia la simulazione fisica temporaneamente
     function startPhysics() {
       // debug('physics.start');
+      if (state && state.physicsEnabled === false) return;
       ensurePhysicsVelocities();
       if (physics.running) return;
       physics.running = true;
@@ -1057,6 +1060,18 @@
         physics.stopTimer = null;
       }
       // debug('physics.stop.done');
+    }
+
+    function setPhysicsEnabled(enabled) {
+      if (!state) return;
+      state.physicsEnabled = !!enabled;
+      if (state.physicsEnabled) {
+        startPhysics();
+        debug('info', 'Physics enabled.');
+      } else {
+        stopPhysics();
+        debug('info', 'Physics disabled.');
+      }
     }
 
     // Helper ordinamento numerico stabile edge keys (e10 dopo e9, prima di e11)
@@ -2221,6 +2236,7 @@
     // Inizializza i controlli dell'interfaccia utente
     function initializeUI() {
       const chkNodeLabels = document.getElementById('toggleNodeLabels');
+      const chkPhysics = document.getElementById('togglePhysics');
       const chkEdgeLabels = document.getElementById('toggleEdgeLabels');
       const btnSplitEdges = document.getElementById('btnSplitEdges');
       const chkDebug = document.getElementById('toggleDebug');
@@ -2228,6 +2244,10 @@
       if (chkNodeLabels) {
         chkNodeLabels.checked = state.showNodeLabels;
         chkNodeLabels.onchange = e => { state.showNodeLabels = e.target.checked; applyLabelVisibility(); };
+      }
+      if (chkPhysics) {
+        chkPhysics.checked = state.physicsEnabled;
+        chkPhysics.onchange = e => setPhysicsEnabled(e.target.checked);
       }
       if (chkEdgeLabels) {
         chkEdgeLabels.checked = state.showEdgeLabels;
