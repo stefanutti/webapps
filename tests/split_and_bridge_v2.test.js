@@ -59,3 +59,11 @@ test('node labels overlay the vertex center with the edge-label outline effect',
   assert.match(html, /'text-outline-width': 2/);
   assert.match(html, /'text-outline-opacity': 1/);
 });
+
+test('settings opens as a fixed centered modal over the graph', () => {
+  assert.match(html, /\.settings-backdrop \{[\s\S]*?position: fixed;/);
+  assert.match(html, /\.settings-drawer \{[\s\S]*?position: fixed;/);
+  assert.match(html, /\.settings-drawer \{[\s\S]*?top: 50%;/);
+  assert.match(html, /\.settings-drawer \{[\s\S]*?left: 50%;/);
+  assert.match(html, /translate\(-50%, -50%\)/);
+});
