@@ -36,6 +36,7 @@ test('graph tools are hidden behind an accessible menu button', () => {
   assert.match(html, /aria-controls="toolDock"/);
   assert.match(html, /aria-expanded="false"/);
   assert.match(html, /id="toolDock"[^>]*hidden/);
+  assert.match(html, /\.tool-dock\[hidden\] \{\s*display: none;/);
   assert.match(html, /function setToolsOpen\(open\)/);
 });
 
