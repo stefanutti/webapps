@@ -84,6 +84,15 @@
       gap: .65rem;
     }
 
+    .tools-trigger {
+      width: 2rem;
+      min-height: 2rem;
+      justify-content: center;
+      padding: .35rem;
+      font-size: 1.1rem;
+      line-height: 1;
+    }
+
     .graph-stats {
       color: var(--muted);
       font-size: .75rem;
@@ -122,12 +131,12 @@
 
     .command-card {
       position: absolute;
-      top: 1rem;
-      left: 1rem;
+      top: .65rem;
+      left: .65rem;
       right: auto;
       z-index: 12;
-      width: min(16rem, calc(100% - 2rem));
-      padding: .8rem;
+      width: min(15rem, calc(100% - 1.3rem));
+      padding: .6rem;
       border-radius: var(--radius);
     }
 
@@ -144,8 +153,8 @@
 
     .command-card h2,
     .settings-drawer h2 {
-      margin: .2rem 0 .65rem;
-      font-size: 1.05rem;
+      margin: .1rem 0 .45rem;
+      font-size: .95rem;
     }
 
     .field {
@@ -155,9 +164,9 @@
 
     .edge-command-row {
       display: grid;
-      grid-template-columns: 5rem 5rem auto;
+      grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) auto;
       align-items: end;
-      gap: .5rem;
+      gap: .35rem;
     }
 
     .action-status {
@@ -191,16 +200,17 @@
 
     .tool-dock {
       position: absolute;
-      bottom: 1rem;
-      left: 50%;
+      top: .65rem;
+      right: .65rem;
+      bottom: auto;
+      left: auto;
       z-index: 12;
       flex-wrap: wrap;
-      justify-content: center;
-      width: max-content;
-      max-width: calc(100% - 2rem);
-      padding: .55rem;
-      border-radius: var(--radius);
-      transform: translateX(-50%);
+      justify-content: flex-start;
+      width: min(20rem, calc(100% - 1.3rem));
+      max-width: calc(100% - 1.3rem);
+      padding: .45rem;
+      border-radius: 12px;
     }
 
     .dock-toggle {
@@ -425,17 +435,18 @@
       }
 
       .command-card {
-        top: 1rem;
-        left: 1rem;
+        top: .65rem;
+        left: .65rem;
         right: auto;
-        width: 60%;
+        width: min(15rem, calc(100% - 1.3rem));
+        padding: .6rem;
       }
 
       .tool-dock {
-        bottom: .7rem;
         gap: .4rem;
-        width: calc(100% - 1.4rem);
-        padding: .4rem;
+        width: min(20rem, calc(100% - 1.3rem));
+        max-width: calc(100% - 1.3rem);
+        padding: .45rem;
       }
 
       .tool-dock button,
@@ -444,12 +455,6 @@
       }
 
       .config-grid {
-        grid-template-columns: 1fr;
-      }
-    }
-
-    @media (max-width: 420px) {
-      .edge-command-row {
         grid-template-columns: 1fr;
       }
     }
@@ -476,6 +481,11 @@
       <h1 id="appTitle"><span class="brand">4CT</span> Split &amp; Bridge</h1>
       <span id="graphStats" class="graph-stats">Waiting for graph</span>
     </div>
+    <div class="app-header__actions">
+      <button id="btnOpenTools" type="button" class="quiet tools-trigger"
+        aria-controls="toolDock" aria-expanded="false" aria-label="Open graph tools"
+        title="Graph tools">☷</button>
+    </div>
   </header>
   <main class="workspace">
     <div id="graph-container" aria-label="Interactive planar graph"></div>
@@ -495,9 +505,9 @@
         </div>
       </div>
       <p id="actionStatus" class="action-status" aria-live="polite"></p>
-      <p class="interaction-hint">Right-click 2 edges or enter their IDs.</p>
+      <p class="interaction-hint">Select 2 edges or enter their IDs.</p>
     </section>
-    <nav id="toolDock" class="tool-dock" aria-label="Graph tools">
+    <nav id="toolDock" class="tool-dock" aria-label="Graph tools" hidden>
       <label class="dock-toggle">Nodes<input type="checkbox" id="toggleNodeLabels" /></label>
       <label class="dock-toggle">Physics<input type="checkbox" id="togglePhysics" /></label>
       <label class="dock-toggle">Edges<input type="checkbox" id="toggleEdgeLabels" /></label>
