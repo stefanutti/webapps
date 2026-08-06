@@ -95,6 +95,7 @@
     #graph-container {
       position: absolute;
       inset: 0;
+      touch-action: none;
       background-color: var(--graphite-950);
       background-image:
         radial-gradient(circle at 50% 42%, rgba(88, 214, 155, .045), transparent 48%),
@@ -1968,15 +1969,13 @@
       state.cy.on('tap', 'edge', event => {
         debug('edge.tap', event.target.id());
         const edgeId = event.target.id();
+        selectSplitEdge(edgeId);
         logEdgeInfo(edgeId, 'Edge tap');
       });
 
-      state.cy.on('mousedown', 'edge', beginEdgeBendDrag);
-      state.cy.on('mousemove', updateEdgeBendDrag);
+      state.cy.on('tapstart', 'edge', beginEdgeBendDrag);
       state.cy.on('tapdrag', updateEdgeBendDrag);
-      state.cy.on('mouseup', endEdgeBendDrag);
       state.cy.on('tapend', endEdgeBendDrag);
-      state.cy.on('cxttap', 'edge', handleEdgeContextSelection);
       if (!state.edgeBendWindowListenerInstalled) {
         window.addEventListener('mouseup', endEdgeBendDrag);
         state.edgeBendWindowListenerInstalled = true;

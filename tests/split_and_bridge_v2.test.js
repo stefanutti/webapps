@@ -103,3 +103,11 @@ test('enabled physics has active defaults and is not stopped by a timer', () => 
   assert.match(html, /id="cfgPhysicsDamping"[^>]*value="0\.3"/);
   assert.doesNotMatch(html, /physics\.stopTimer = window\.setTimeout\(\(\) =>/);
 });
+
+test('graph gestures are unified for mouse and touch', () => {
+  assert.match(html, /#graph-container \{[\s\S]*?touch-action: none;/);
+  assert.match(html, /state\.cy\.on\('tap', 'edge', event => \{[\s\S]*?selectSplitEdge\(edgeId\)/);
+  assert.match(html, /state\.cy\.on\('tapstart', 'edge', beginEdgeBendDrag\)/);
+  assert.match(html, /state\.cy\.on\('tapdrag', updateEdgeBendDrag\)/);
+  assert.doesNotMatch(html, /state\.cy\.on\('cxttap', 'edge', handleEdgeContextSelection\)/);
+});
