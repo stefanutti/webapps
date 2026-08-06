@@ -661,9 +661,12 @@
     function initializeToolsPopover() {
       const toolDock = document.getElementById('toolDock');
       const btnOpenTools = document.getElementById('btnOpenTools');
+      const settingsDrawer = document.getElementById('settingsDrawer');
+      const settingsBackdrop = document.getElementById('settingsBackdrop');
       if (!toolDock || !btnOpenTools) return;
       btnOpenTools.onclick = () => setToolsOpen(!toolsOpen);
       document.addEventListener('click', event => {
+        if (settingsDrawer.contains(event.target) || event.target === settingsBackdrop) return;
         if (settingsOpen) return;
         if (toolsOpen && !toolDock.contains(event.target) && event.target !== btnOpenTools) setToolsOpen(false);
       });

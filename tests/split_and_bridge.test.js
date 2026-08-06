@@ -57,8 +57,17 @@ test('tools popover defers Escape and outside click handling to Settings', () =>
   assert.match(html, /function handleToolsKeydown\(event\) \{\s*if \(settingsOpen \|\| event\.defaultPrevented\) return;/);
   assert.match(
     html,
-    /document\.addEventListener\('click', event => \{\s*if \(settingsOpen\) return;\s*if \(toolsOpen && !toolDock\.contains\(event\.target\) && event\.target !== btnOpenTools\) setToolsOpen\(false\);/
+    /document\.addEventListener\('click', event => \{\s*if \(settingsDrawer\.contains\(event\.target\) \|\| event\.target === settingsBackdrop\) return;\s*if \(settingsOpen\) return;\s*if \(toolsOpen && !toolDock\.contains\(event\.target\) && event\.target !== btnOpenTools\) setToolsOpen\(false\);/
   );
+});
+
+test('tools outside click ignores Settings drawer and backdrop targets after Settings closes', () => {
+  assert.match(
+    html,
+    /if \(settingsDrawer\.contains\(event\.target\) \|\| event\.target === settingsBackdrop\) return;\s*if \(settingsOpen\) return;/
+  );
+  assert.match(html, /const settingsDrawer = document\.getElementById\('settingsDrawer'\);/);
+  assert.match(html, /const settingsBackdrop = document\.getElementById\('settingsBackdrop'\);/);
 });
 
 test('tools outside close runs after the clicked control receives browser focus', () => {
@@ -68,7 +77,7 @@ test('tools outside close runs after the clicked control receives browser focus'
   );
   assert.match(
     html,
-    /document\.addEventListener\('click', event => \{\s*if \(settingsOpen\) return;\s*if \(toolsOpen && !toolDock\.contains\(event\.target\) && event\.target !== btnOpenTools\) setToolsOpen\(false\);/
+    /document\.addEventListener\('click', event => \{\s*if \(settingsDrawer\.contains\(event\.target\) \|\| event\.target === settingsBackdrop\) return;\s*if \(settingsOpen\) return;\s*if \(toolsOpen && !toolDock\.contains\(event\.target\) && event\.target !== btnOpenTools\) setToolsOpen\(false\);/
   );
 });
 
