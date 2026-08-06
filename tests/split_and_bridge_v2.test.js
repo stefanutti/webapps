@@ -45,6 +45,11 @@ test('Split & Bridge uses a compact outer panel', () => {
   assert.match(html, /width: min\(16rem, calc\(100% - 2rem\)\)/);
 });
 
+test('mobile viewport keeps the app fixed without page scrolling', () => {
+  assert.match(html, /html \{[\s\S]*?height: 100%;[\s\S]*?overflow: hidden;/);
+  assert.match(html, /height: 100dvh;[\s\S]*?min-height: 0;[\s\S]*?overflow: hidden;/);
+});
+
 test('node labels are plain and match the default edge label size', () => {
   assert.match(html, /nodeLabelFontSize: 9/);
   assert.doesNotMatch(html, /'text-background-color': '#171d23'/);
