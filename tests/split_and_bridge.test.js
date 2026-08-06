@@ -3,7 +3,7 @@ const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const path = require('node:path');
 
-const html = fs.readFileSync(path.join(__dirname, '..', 'split_and_bridge_v2.html'), 'utf8');
+const html = fs.readFileSync(path.join(__dirname, '..', 'split_and_bridge.html'), 'utf8');
 
 test('Split & Bridge exposes two separate edge fields', () => {
   assert.match(html, /id="edgeSplitInputA"/);
