@@ -53,15 +53,26 @@ test('Settings keeps its focus-return trigger available while open', () => {
   );
 });
 
-test('tools popover defers Escape and outside pointer handling to Settings', () => {
+test('tools popover defers Escape and outside click handling to Settings', () => {
   assert.match(html, /function handleToolsKeydown\(event\) \{\s*if \(settingsOpen \|\| event\.defaultPrevented\) return;/);
   assert.match(
     html,
-    /document\.addEventListener\('pointerdown', event => \{\s*if \(settingsOpen\) return;\s*if \(toolsOpen && !toolDock\.contains\(event\.target\) && event\.target !== btnOpenTools\) setToolsOpen\(false\);/
+    /document\.addEventListener\('click', event => \{\s*if \(settingsOpen\) return;\s*if \(toolsOpen && !toolDock\.contains\(event\.target\) && event\.target !== btnOpenTools\) setToolsOpen\(false\);/
   );
 });
 
-test('tools popover controller closes on Escape and outside pointer interaction', () => {
+test('tools outside close runs after the clicked control receives browser focus', () => {
+  assert.doesNotMatch(
+    html,
+    /document\.addEventListener\('pointerdown', event => \{\s*if \(settingsOpen\) return;\s*if \(toolsOpen && !toolDock\.contains\(event\.target\) && event\.target !== btnOpenTools\) setToolsOpen\(false\);/
+  );
+  assert.match(
+    html,
+    /document\.addEventListener\('click', event => \{\s*if \(settingsOpen\) return;\s*if \(toolsOpen && !toolDock\.contains\(event\.target\) && event\.target !== btnOpenTools\) setToolsOpen\(false\);/
+  );
+});
+
+test('tools popover controller closes on Escape and outside click interaction', () => {
   assert.match(html, /function setToolsOpen\(open, \{ restoreFocus = true \} = \{\}\)/);
   assert.match(html, /function handleToolsKeydown\(event\)/);
   assert.match(html, /event\.key === 'Escape'/);

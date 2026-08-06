@@ -663,7 +663,7 @@
       const btnOpenTools = document.getElementById('btnOpenTools');
       if (!toolDock || !btnOpenTools) return;
       btnOpenTools.onclick = () => setToolsOpen(!toolsOpen);
-      document.addEventListener('pointerdown', event => {
+      document.addEventListener('click', event => {
         if (settingsOpen) return;
         if (toolsOpen && !toolDock.contains(event.target) && event.target !== btnOpenTools) setToolsOpen(false);
       });
