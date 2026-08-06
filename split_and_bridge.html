@@ -34,6 +34,10 @@
       box-sizing: border-box;
     }
 
+    [hidden] {
+      display: none !important;
+    }
+
     body {
       font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
       margin: 0;
@@ -570,6 +574,7 @@
       if (!drawer || !backdrop || !trigger) return;
       const nextOpen = !!open;
       const wasOpen = settingsOpen;
+      if (nextOpen && toolsOpen) setToolsOpen(false, { restoreFocus: false });
       settingsOpen = nextOpen;
       drawer.classList.toggle('is-open', nextOpen);
       drawer.setAttribute('aria-hidden', String(!nextOpen));
@@ -634,18 +639,20 @@
       setSettingsOpen(false);
     }
 
-    function setToolsOpen(open) {
+    function setToolsOpen(open, { restoreFocus = true } = {}) {
       const toolDock = document.getElementById('toolDock');
       const btnOpenTools = document.getElementById('btnOpenTools');
       if (!toolDock || !btnOpenTools) return;
+      const wasOpen = toolsOpen;
       toolsOpen = !!open;
       toolDock.hidden = !toolsOpen;
       btnOpenTools.setAttribute('aria-expanded', String(toolsOpen));
       btnOpenTools.setAttribute('aria-label', toolsOpen ? 'Close graph tools' : 'Open graph tools');
-      if (!toolsOpen) btnOpenTools.focus();
+      if (!toolsOpen && wasOpen && restoreFocus) btnOpenTools.focus();
     }
 
     function handleToolsKeydown(event) {
+      if (settingsOpen) return;
       if (event.key === 'Escape' && toolsOpen) {
         event.preventDefault();
         setToolsOpen(false);
@@ -661,7 +668,7 @@
         if (toolsOpen && !toolDock.contains(event.target) && event.target !== btnOpenTools) setToolsOpen(false);
       });
       window.addEventListener('keydown', handleToolsKeydown);
-      setToolsOpen(false);
+      setToolsOpen(false, { restoreFocus: false });
     }
 
     function updateGraphStats() {

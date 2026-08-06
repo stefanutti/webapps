@@ -36,12 +36,23 @@ test('graph tools are hidden behind an accessible menu button', () => {
   assert.match(html, /aria-controls="toolDock"/);
   assert.match(html, /aria-expanded="false"/);
   assert.match(html, /id="toolDock"[^>]*hidden/);
-  assert.match(html, /\.tool-dock\[hidden\] \{\s*display: none;/);
-  assert.match(html, /function setToolsOpen\(open\)/);
+  assert.match(html, /\[hidden\] \{\s*display: none !important;/);
+  assert.match(html, /function setToolsOpen\(open, \{ restoreFocus = true \} = \{\}\)/);
+});
+
+test('tools popover restores focus only after closing an open popover', () => {
+  assert.match(html, /const wasOpen = toolsOpen;/);
+  assert.match(html, /if \(!toolsOpen && wasOpen && restoreFocus\) btnOpenTools\.focus\(\);/);
+  assert.match(html, /function initializeToolsPopover\(\)[\s\S]*?setToolsOpen\(false, \{ restoreFocus: false \}\);/);
+});
+
+test('tools popover defers Escape and focus ownership to Settings', () => {
+  assert.match(html, /if \(nextOpen && toolsOpen\) setToolsOpen\(false, \{ restoreFocus: false \}\);/);
+  assert.match(html, /function handleToolsKeydown\(event\) \{\s*if \(settingsOpen\) return;/);
 });
 
 test('tools popover controller closes on Escape and outside pointer interaction', () => {
-  assert.match(html, /function setToolsOpen\(open\)/);
+  assert.match(html, /function setToolsOpen\(open, \{ restoreFocus = true \} = \{\}\)/);
   assert.match(html, /function handleToolsKeydown\(event\)/);
   assert.match(html, /event\.key === 'Escape'/);
   assert.match(html, /toolDock\.contains\(event\.target\)/);
