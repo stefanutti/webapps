@@ -31,63 +31,44 @@ test('Split & Bridge uses a compact single-row command layout', () => {
   assert.match(html, /grid-template-columns: minmax\(0, 1fr\) minmax\(0, 1fr\) auto/);
 });
 
-test('graph tools are hidden behind an accessible menu button', () => {
-  assert.match(html, /id="btnOpenTools"/);
-  assert.match(html, /aria-controls="toolDock"/);
+test('graph tools open directly into a single settings window', () => {
+  assert.match(html, /id="btnOpenSettings"/);
+  assert.match(html, /aria-controls="settingsDrawer"/);
   assert.match(html, /aria-expanded="false"/);
-  assert.match(html, /id="toolDock"[^>]*hidden/);
-  assert.match(html, /\[hidden\] \{\s*display: none !important;/);
-  assert.match(html, /function setToolsOpen\(open, \{ restoreFocus = true \} = \{\}\)/);
+  assert.match(html, /id="settingsDrawer"[^>]*aria-hidden="true"/);
+  assert.doesNotMatch(html, /id="toolDock"/);
+  assert.doesNotMatch(html, /id="btnOpenTools"/);
+  assert.doesNotMatch(html, /function setToolsOpen/);
+  assert.doesNotMatch(html, /function initializeToolsPopover/);
 });
 
-test('tools popover restores focus only after closing an open popover', () => {
-  assert.match(html, /const wasOpen = toolsOpen;/);
-  assert.match(html, /if \(!toolsOpen && wasOpen && restoreFocus\) btnOpenTools\.focus\(\);/);
-  assert.match(html, /function initializeToolsPopover\(\)[\s\S]*?setToolsOpen\(false, \{ restoreFocus: false \}\);/);
+test('the Tools section is the first section in the settings window, before Appearance and Physics', () => {
+  const controlsMatch = html.match(/<div id="controls">([\s\S]*?)<\/aside>/);
+  assert.ok(controlsMatch, 'expected a #controls container inside the settings drawer');
+  const toolsIndex = controlsMatch[1].indexOf('id="group-tools"');
+  const appearanceIndex = controlsMatch[1].indexOf('id="group-appearance"');
+  const physicsIndex = controlsMatch[1].indexOf('id="group-physics"');
+  assert.notEqual(toolsIndex, -1);
+  assert.ok(toolsIndex < appearanceIndex);
+  assert.ok(appearanceIndex < physicsIndex);
 });
 
-test('Settings keeps its focus-return trigger available while open', () => {
-  assert.doesNotMatch(
-    html,
-    /function setSettingsOpen\(open\) \{[\s\S]*?if \(nextOpen && toolsOpen\) setToolsOpen\(false, \{ restoreFocus: false \}\);/
-  );
+test('the Tools section holds the Nodes/Physics/Edges/Debug toggles and the Export DOT button', () => {
+  const toolsSectionMatch = html.match(/<section class="drawer-section" id="group-tools"[\s\S]*?<\/section>/);
+  assert.ok(toolsSectionMatch, 'expected a group-tools drawer section');
+  const section = toolsSectionMatch[0];
+  assert.match(section, /Nodes<input type="checkbox" id="toggleNodeLabels" \/>/);
+  assert.match(section, /Physics<input type="checkbox" id="togglePhysics" \/>/);
+  assert.match(section, /Edges<input type="checkbox" id="toggleEdgeLabels" \/>/);
+  assert.match(section, /Debug<input type="checkbox" id="toggleDebug" \/>/);
+  assert.match(section, /id="btnExportDot"/);
 });
 
-test('tools popover defers Escape and outside click handling to Settings', () => {
-  assert.match(html, /function handleToolsKeydown\(event\) \{\s*if \(settingsOpen \|\| event\.defaultPrevented\) return;/);
-  assert.match(
-    html,
-    /document\.addEventListener\('click', event => \{\s*if \(settingsDrawer\.contains\(event\.target\) \|\| event\.target === settingsBackdrop\) return;\s*if \(settingsOpen\) return;\s*if \(toolsOpen && !toolDock\.contains\(event\.target\) && event\.target !== btnOpenTools\) setToolsOpen\(false\);/
-  );
-});
-
-test('tools outside click ignores Settings drawer and backdrop targets after Settings closes', () => {
-  assert.match(
-    html,
-    /if \(settingsDrawer\.contains\(event\.target\) \|\| event\.target === settingsBackdrop\) return;\s*if \(settingsOpen\) return;/
-  );
-  assert.match(html, /const settingsDrawer = document\.getElementById\('settingsDrawer'\);/);
-  assert.match(html, /const settingsBackdrop = document\.getElementById\('settingsBackdrop'\);/);
-});
-
-test('tools outside close runs after the clicked control receives browser focus', () => {
-  assert.doesNotMatch(
-    html,
-    /document\.addEventListener\('pointerdown', event => \{\s*if \(settingsOpen\) return;\s*if \(toolsOpen && !toolDock\.contains\(event\.target\) && event\.target !== btnOpenTools\) setToolsOpen\(false\);/
-  );
-  assert.match(
-    html,
-    /document\.addEventListener\('click', event => \{\s*if \(settingsDrawer\.contains\(event\.target\) \|\| event\.target === settingsBackdrop\) return;\s*if \(settingsOpen\) return;\s*if \(toolsOpen && !toolDock\.contains\(event\.target\) && event\.target !== btnOpenTools\) setToolsOpen\(false\);/
-  );
-});
-
-test('tools popover controller closes on Escape and outside click interaction', () => {
-  assert.match(html, /function setToolsOpen\(open, \{ restoreFocus = true \} = \{\}\)/);
-  assert.match(html, /function handleToolsKeydown\(event\)/);
-  assert.match(html, /event\.key === 'Escape'/);
-  assert.match(html, /toolDock\.contains\(event\.target\)/);
-  assert.match(html, /btnOpenTools\.focus\(\)/);
-  assert.match(html, /initializeToolsPopover\(\)/);
+test('there is a single trigger and a single window for tools and settings', () => {
+  assert.match(html, /function initializeSettingsDrawer\(\)/);
+  assert.doesNotMatch(html, /let toolsOpen/);
+  assert.doesNotMatch(html, /toolDock/);
+  assert.doesNotMatch(html, /btnOpenTools/);
 });
 
 test('Split & Bridge uses interaction-neutral help copy and compact narrow layout', () => {
