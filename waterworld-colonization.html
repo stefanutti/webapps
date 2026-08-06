@@ -373,6 +373,7 @@ let coast, faces, sumLand, moves, maxR, invOK, running=true, full=false;
 let inkLines;                      // every border ever drawn, as planar polylines
 let fallbackCount;                 // how many times attemptMove() hit the F3 fallback
 let closing, closeDone;            // v6: "Close map" endgame state
+let closeToastTimer=null;          // auto-dismiss handle for the "map closed" message
 let defaultColor='#78838c';        // v9: current auto-fill color, stamped onto a face the moment it seals
 
 function reset(){
@@ -394,6 +395,7 @@ function reset(){
   btnRun.disabled=false; btnRun.textContent='Start'; btnRun.classList.remove('primary');
   fullToast.classList.remove('show');
   btnClose.disabled=false; btnClose.textContent='Close map';
+  clearTimeout(closeToastTimer);
   closeToast.classList.remove('show');
 }
 
@@ -672,11 +674,16 @@ function tryPromotionMove(){
   execStandardMove(pickInsertionIndex(),0);
   return false;
 }
+function showCloseToast(){
+  closeToast.classList.add('show');
+  clearTimeout(closeToastTimer);
+  closeToastTimer=setTimeout(()=>closeToast.classList.remove('show'), 4000);
+}
 function finishClose(){          /* nothing is buried: the ocean and its coast faces stay open forever */
   closing=false; closeDone=true; running=false;
-  btnRun.disabled=true; btnRun.textContent='Closed'; btnRun.classList.remove('primary');
-  btnClose.disabled=true; btnClose.textContent='Map closed';
-  closeToast.classList.add('show');
+  btnRun.disabled=false; btnRun.textContent='Start'; btnRun.classList.remove('primary');
+  btnClose.disabled=false; btnClose.textContent='Close map';
+  showCloseToast();
 }
 function closeStep(){
   if(closeDone) return;
@@ -964,13 +971,21 @@ function openColorPicker(f){
 }
 if(matchMedia('(prefers-reduced-motion: reduce)').matches){
   running=false; speedEl.value=3; }
-btnRun.onclick=()=>{ if(full||closeDone) return; running=!running; btnRun.textContent=running?'Stop':'Start'; };
+btnRun.onclick=()=>{
+  if(full) return;
+  running=!running;
+  btnRun.textContent=running?'Stop':'Start';
+  if(running){ clearTimeout(closeToastTimer); closeToast.classList.remove('show'); }   // resuming growth makes the "closed" state stale
+};
 btnReset.onclick=()=>{ reset(); updateStats(); };
-document.getElementById('closeToastX').onclick=()=>closeToast.classList.remove('show');
+document.getElementById('closeToastX').onclick=()=>{ clearTimeout(closeToastTimer); closeToast.classList.remove('show'); };
 btnClose.onclick=()=>{
-  if(closing || closeDone || moves===0) return;
-  closing=true; running=true; btnRun.textContent='Stop';
+  if(closing || moves===0) return;
+  closeDone=false;                     // allow re-closing later if growth reintroduces small faces
+  closing=true; running=true; btnRun.disabled=false; btnRun.textContent='Stop';
   fullToast.classList.remove('show');
+  clearTimeout(closeToastTimer);
+  closeToast.classList.remove('show');
   btnClose.disabled=true; btnClose.textContent='Closing…';
 };
 btnExport.onclick=()=>exportVerticesFile();
