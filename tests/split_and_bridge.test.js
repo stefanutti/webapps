@@ -31,6 +31,20 @@ test('Split & Bridge uses a compact single-row command layout', () => {
   assert.match(html, /grid-template-columns: 5rem 5rem auto/);
 });
 
+test('graph tools are hidden behind an accessible menu button', () => {
+  assert.match(html, /id="btnOpenTools"/);
+  assert.match(html, /aria-controls="toolDock"/);
+  assert.match(html, /aria-expanded="false"/);
+  assert.match(html, /id="toolDock"[^>]*hidden/);
+  assert.match(html, /function setToolsOpen\(open\)/);
+});
+
+test('Split & Bridge uses interaction-neutral help copy and compact narrow layout', () => {
+  assert.match(html, /Select 2 edges or enter their IDs\./);
+  assert.doesNotMatch(html, /Right-click 2 edges or enter their IDs\./);
+  assert.match(html, /grid-template-columns: minmax\(0, 1fr\) minmax\(0, 1fr\) auto/);
+});
+
 test('Split & Bridge uses numeric edge labels and a compact button label', () => {
   assert.match(html, />Edge 1</);
   assert.match(html, />Edge 2</);
