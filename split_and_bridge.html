@@ -574,7 +574,6 @@
       if (!drawer || !backdrop || !trigger) return;
       const nextOpen = !!open;
       const wasOpen = settingsOpen;
-      if (nextOpen && toolsOpen) setToolsOpen(false, { restoreFocus: false });
       settingsOpen = nextOpen;
       drawer.classList.toggle('is-open', nextOpen);
       drawer.setAttribute('aria-hidden', String(!nextOpen));
@@ -665,6 +664,7 @@
       if (!toolDock || !btnOpenTools) return;
       btnOpenTools.onclick = () => setToolsOpen(!toolsOpen);
       document.addEventListener('pointerdown', event => {
+        if (settingsOpen) return;
         if (toolsOpen && !toolDock.contains(event.target) && event.target !== btnOpenTools) setToolsOpen(false);
       });
       window.addEventListener('keydown', handleToolsKeydown);

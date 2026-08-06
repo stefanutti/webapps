@@ -46,9 +46,19 @@ test('tools popover restores focus only after closing an open popover', () => {
   assert.match(html, /function initializeToolsPopover\(\)[\s\S]*?setToolsOpen\(false, \{ restoreFocus: false \}\);/);
 });
 
-test('tools popover defers Escape and focus ownership to Settings', () => {
-  assert.match(html, /if \(nextOpen && toolsOpen\) setToolsOpen\(false, \{ restoreFocus: false \}\);/);
+test('Settings keeps its focus-return trigger available while open', () => {
+  assert.doesNotMatch(
+    html,
+    /function setSettingsOpen\(open\) \{[\s\S]*?if \(nextOpen && toolsOpen\) setToolsOpen\(false, \{ restoreFocus: false \}\);/
+  );
+});
+
+test('tools popover defers Escape and outside pointer handling to Settings', () => {
   assert.match(html, /function handleToolsKeydown\(event\) \{\s*if \(settingsOpen\) return;/);
+  assert.match(
+    html,
+    /document\.addEventListener\('pointerdown', event => \{\s*if \(settingsOpen\) return;\s*if \(toolsOpen && !toolDock\.contains\(event\.target\) && event\.target !== btnOpenTools\) setToolsOpen\(false\);/
+  );
 });
 
 test('tools popover controller closes on Escape and outside pointer interaction', () => {
