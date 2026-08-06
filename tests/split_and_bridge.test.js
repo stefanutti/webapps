@@ -26,9 +26,74 @@ test('Split & Bridge keeps the two fields synchronized with command parsing', ()
 test('Split & Bridge uses a compact single-row command layout', () => {
   assert.doesNotMatch(html, />Trasformazione</);
   assert.doesNotMatch(html, /id="selectionStatus"/);
-  assert.match(html, /Right-click 2 edges or enter their IDs\./);
+  assert.match(html, /Select 2 edges or enter their IDs\./);
   assert.match(html, /class="edge-command-row"/);
-  assert.match(html, /grid-template-columns: 5rem 5rem auto/);
+  assert.match(html, /grid-template-columns: minmax\(0, 1fr\) minmax\(0, 1fr\) auto/);
+});
+
+test('graph tools are hidden behind an accessible menu button', () => {
+  assert.match(html, /id="btnOpenTools"/);
+  assert.match(html, /aria-controls="toolDock"/);
+  assert.match(html, /aria-expanded="false"/);
+  assert.match(html, /id="toolDock"[^>]*hidden/);
+  assert.match(html, /\[hidden\] \{\s*display: none !important;/);
+  assert.match(html, /function setToolsOpen\(open, \{ restoreFocus = true \} = \{\}\)/);
+});
+
+test('tools popover restores focus only after closing an open popover', () => {
+  assert.match(html, /const wasOpen = toolsOpen;/);
+  assert.match(html, /if \(!toolsOpen && wasOpen && restoreFocus\) btnOpenTools\.focus\(\);/);
+  assert.match(html, /function initializeToolsPopover\(\)[\s\S]*?setToolsOpen\(false, \{ restoreFocus: false \}\);/);
+});
+
+test('Settings keeps its focus-return trigger available while open', () => {
+  assert.doesNotMatch(
+    html,
+    /function setSettingsOpen\(open\) \{[\s\S]*?if \(nextOpen && toolsOpen\) setToolsOpen\(false, \{ restoreFocus: false \}\);/
+  );
+});
+
+test('tools popover defers Escape and outside click handling to Settings', () => {
+  assert.match(html, /function handleToolsKeydown\(event\) \{\s*if \(settingsOpen \|\| event\.defaultPrevented\) return;/);
+  assert.match(
+    html,
+    /document\.addEventListener\('click', event => \{\s*if \(settingsDrawer\.contains\(event\.target\) \|\| event\.target === settingsBackdrop\) return;\s*if \(settingsOpen\) return;\s*if \(toolsOpen && !toolDock\.contains\(event\.target\) && event\.target !== btnOpenTools\) setToolsOpen\(false\);/
+  );
+});
+
+test('tools outside click ignores Settings drawer and backdrop targets after Settings closes', () => {
+  assert.match(
+    html,
+    /if \(settingsDrawer\.contains\(event\.target\) \|\| event\.target === settingsBackdrop\) return;\s*if \(settingsOpen\) return;/
+  );
+  assert.match(html, /const settingsDrawer = document\.getElementById\('settingsDrawer'\);/);
+  assert.match(html, /const settingsBackdrop = document\.getElementById\('settingsBackdrop'\);/);
+});
+
+test('tools outside close runs after the clicked control receives browser focus', () => {
+  assert.doesNotMatch(
+    html,
+    /document\.addEventListener\('pointerdown', event => \{\s*if \(settingsOpen\) return;\s*if \(toolsOpen && !toolDock\.contains\(event\.target\) && event\.target !== btnOpenTools\) setToolsOpen\(false\);/
+  );
+  assert.match(
+    html,
+    /document\.addEventListener\('click', event => \{\s*if \(settingsDrawer\.contains\(event\.target\) \|\| event\.target === settingsBackdrop\) return;\s*if \(settingsOpen\) return;\s*if \(toolsOpen && !toolDock\.contains\(event\.target\) && event\.target !== btnOpenTools\) setToolsOpen\(false\);/
+  );
+});
+
+test('tools popover controller closes on Escape and outside click interaction', () => {
+  assert.match(html, /function setToolsOpen\(open, \{ restoreFocus = true \} = \{\}\)/);
+  assert.match(html, /function handleToolsKeydown\(event\)/);
+  assert.match(html, /event\.key === 'Escape'/);
+  assert.match(html, /toolDock\.contains\(event\.target\)/);
+  assert.match(html, /btnOpenTools\.focus\(\)/);
+  assert.match(html, /initializeToolsPopover\(\)/);
+});
+
+test('Split & Bridge uses interaction-neutral help copy and compact narrow layout', () => {
+  assert.match(html, /Select 2 edges or enter their IDs\./);
+  assert.doesNotMatch(html, /Right-click 2 edges or enter their IDs\./);
+  assert.match(html, /grid-template-columns: minmax\(0, 1fr\) minmax\(0, 1fr\) auto/);
 });
 
 test('Split & Bridge uses numeric edge labels and a compact button label', () => {
@@ -38,11 +103,11 @@ test('Split & Bridge uses numeric edge labels and a compact button label', () =>
 });
 
 test('Split & Bridge keeps edge inputs narrow beside the button', () => {
-  assert.match(html, /grid-template-columns: 5rem 5rem auto/);
+  assert.match(html, /grid-template-columns: minmax\(0, 1fr\) minmax\(0, 1fr\) auto/);
 });
 
 test('Split & Bridge uses a compact outer panel', () => {
-  assert.match(html, /width: min\(16rem, calc\(100% - 2rem\)\)/);
+  assert.match(html, /width: min\(15rem, calc\(100% - 1\.3rem\)\)/);
 });
 
 test('mobile viewport keeps the app fixed without page scrolling', () => {
@@ -77,7 +142,7 @@ test('the visible application copy is in English', () => {
   for (const phrase of [
     'Waiting for graph',
     'Interactive planar graph',
-    'Right-click 2 edges or enter their IDs.',
+    'Select 2 edges or enter their IDs.',
     'Export DOT',
     'Settings',
     'Appearance',
