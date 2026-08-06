@@ -39,6 +39,15 @@ test('graph tools are hidden behind an accessible menu button', () => {
   assert.match(html, /function setToolsOpen\(open\)/);
 });
 
+test('tools popover controller closes on Escape and outside pointer interaction', () => {
+  assert.match(html, /function setToolsOpen\(open\)/);
+  assert.match(html, /function handleToolsKeydown\(event\)/);
+  assert.match(html, /event\.key === 'Escape'/);
+  assert.match(html, /toolDock\.contains\(event\.target\)/);
+  assert.match(html, /btnOpenTools\.focus\(\)/);
+  assert.match(html, /initializeToolsPopover\(\)/);
+});
+
 test('Split & Bridge uses interaction-neutral help copy and compact narrow layout', () => {
   assert.match(html, /Select 2 edges or enter their IDs\./);
   assert.doesNotMatch(html, /Right-click 2 edges or enter their IDs\./);
@@ -56,7 +65,7 @@ test('Split & Bridge keeps edge inputs narrow beside the button', () => {
 });
 
 test('Split & Bridge uses a compact outer panel', () => {
-  assert.match(html, /width: min\(16rem, calc\(100% - 2rem\)\)/);
+  assert.match(html, /width: min\(15rem, calc\(100% - 1\.3rem\)\)/);
 });
 
 test('mobile viewport keeps the app fixed without page scrolling', () => {
