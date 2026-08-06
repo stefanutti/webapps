@@ -3,7 +3,7 @@ const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const path = require('node:path');
 
-const html = fs.readFileSync(path.join(__dirname, '..', 'split_and_bridge_v2.html'), 'utf8');
+const html = fs.readFileSync(path.join(__dirname, '..', 'split_and_bridge.html'), 'utf8');
 
 test('Split & Bridge exposes two separate edge fields', () => {
   assert.match(html, /id="edgeSplitInputA"/);
@@ -43,6 +43,11 @@ test('Split & Bridge keeps edge inputs narrow beside the button', () => {
 
 test('Split & Bridge uses a compact outer panel', () => {
   assert.match(html, /width: min\(16rem, calc\(100% - 2rem\)\)/);
+});
+
+test('mobile viewport keeps the app fixed without page scrolling', () => {
+  assert.match(html, /html \{[\s\S]*?height: 100%;[\s\S]*?overflow: hidden;/);
+  assert.match(html, /height: 100dvh;[\s\S]*?min-height: 0;[\s\S]*?overflow: hidden;/);
 });
 
 test('node labels are plain and match the default edge label size', () => {
@@ -102,4 +107,12 @@ test('enabled physics has active defaults and is not stopped by a timer', () => 
   assert.match(html, /id="cfgPhysicsRepulsion"[^>]*step="0\.001"[^>]*value="0\.002"/);
   assert.match(html, /id="cfgPhysicsDamping"[^>]*value="0\.3"/);
   assert.doesNotMatch(html, /physics\.stopTimer = window\.setTimeout\(\(\) =>/);
+});
+
+test('graph gestures are unified for mouse and touch', () => {
+  assert.match(html, /#graph-container \{[\s\S]*?touch-action: none;/);
+  assert.match(html, /state\.cy\.on\('tap', 'edge', event => \{[\s\S]*?selectSplitEdge\(edgeId\)/);
+  assert.match(html, /state\.cy\.on\('tapstart', 'edge', beginEdgeBendDrag\)/);
+  assert.match(html, /state\.cy\.on\('tapdrag', updateEdgeBendDrag\)/);
+  assert.doesNotMatch(html, /state\.cy\.on\('cxttap', 'edge', handleEdgeContextSelection\)/);
 });
