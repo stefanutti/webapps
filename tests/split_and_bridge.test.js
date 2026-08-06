@@ -54,7 +54,7 @@ test('Settings keeps its focus-return trigger available while open', () => {
 });
 
 test('tools popover defers Escape and outside pointer handling to Settings', () => {
-  assert.match(html, /function handleToolsKeydown\(event\) \{\s*if \(settingsOpen\) return;/);
+  assert.match(html, /function handleToolsKeydown\(event\) \{\s*if \(settingsOpen \|\| event\.defaultPrevented\) return;/);
   assert.match(
     html,
     /document\.addEventListener\('pointerdown', event => \{\s*if \(settingsOpen\) return;\s*if \(toolsOpen && !toolDock\.contains\(event\.target\) && event\.target !== btnOpenTools\) setToolsOpen\(false\);/

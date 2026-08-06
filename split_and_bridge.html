@@ -651,7 +651,7 @@
     }
 
     function handleToolsKeydown(event) {
-      if (settingsOpen) return;
+      if (settingsOpen || event.defaultPrevented) return;
       if (event.key === 'Escape' && toolsOpen) {
         event.preventDefault();
         setToolsOpen(false);
