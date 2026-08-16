@@ -31,12 +31,13 @@
   .inv b{font-weight:400}
   .inv .ok{color:var(--ok)} .inv .bad{color:var(--bad)} .inv .warn{color:var(--warn)}
   .legend{bottom:24px;left:24px;font-size:11.5px;line-height:1.9;color:var(--foam-dim)}
-  .swatch{display:inline-block;width:22px;height:0;border-top:2px solid #DEF4FC;
+  .swatch{display:inline-block;width:22px;height:0;border-top:2px solid #5B9FD4;
           margin-right:8px;vertical-align:3px}
   .swatch.dim{border-top:1px solid rgba(215,238,244,.45)}
   .controls{bottom:24px;right:24px;display:flex;flex-wrap:wrap;align-items:center;
          justify-content:flex-end;gap:0;max-width:calc(100vw - 48px);padding:6px 8px}
-  .ctrl-group{display:flex;align-items:center;gap:8px;padding:0 10px}
+  .ctrl-group{display:flex;align-items:center;gap:8px;padding:0 8px}
+  .ctrl-group.swatches{gap:5px}
   .ctrl-group+.ctrl-group{border-left:1px solid var(--hairline)}
   .ctrl-label{font-size:11px;letter-spacing:.12em;color:var(--foam-dim);
          font-family:ui-monospace,'SF Mono',Menlo,Consolas,monospace}
@@ -49,6 +50,7 @@
   button:disabled:hover{border-color:var(--hairline)}
   button:focus-visible{outline:2px solid var(--foam);outline-offset:2px}
   button.primary{background:rgba(215,238,244,.10)}
+  .icon-btn{padding:8px}
   .ico-svg{width:14px;height:14px;display:block;flex-shrink:0}
   input[type=range]{width:100px;accent-color:#8FC6DB;background:transparent}
   input[type=color]{width:26px;height:22px;border:1px solid var(--hairline);border-radius:5px;
@@ -80,6 +82,7 @@
               justify-content:center;gap:4px 0;padding:6px}
     .ctrl-group{padding:0 7px;gap:6px}
     button{padding:6px 10px;font-size:11px}
+    .icon-btn{padding:7px}
     .ctrl-label{font-size:9.5px}
     input[type=range]{width:64px}
     #fullToast{bottom:150px}
@@ -104,6 +107,7 @@
   <div class="row"><span class="k">Ocean</span><span id="sO">1</span></div>
   <div class="row"><span class="k">Coast C</span><span id="sC">2</span></div>
   <div class="row"><span class="k">Pentagons F5</span><span id="s5">0</span></div>
+  <div class="row"><span class="k">Hexagons F6</span><span id="s6">0</span></div>
   <div class="row"><span class="k">Wells n&gt;6</span><span id="sW">0</span></div>
   <div class="row"><span class="k">Moves</span><span id="sM">0</span></div>
   <div class="row"><span class="k">Fallback F3</span><span id="sFB">0</span></div>
@@ -123,18 +127,31 @@
 
 <div class="panel controls">
   <div class="ctrl-group">
-    <button id="btnRun" aria-label="Start or stop the growth">Start</button>
+    <button id="btnRun" class="icon-btn" title="Start" aria-label="Start or stop the growth">
+      <svg class="ico-svg" id="btnRunIcon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+           stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">
+        <polygon points="6 3 20 12 6 21 6 3"/>
+      </svg>
+    </button>
+    <button id="btnClose" class="icon-btn" title="Close map" aria-label="Promote every small face and complete the map; the ocean stays open">
+      <svg class="ico-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+           stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">
+        <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+        <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+      </svg>
+    </button>
   </div>
   <div class="ctrl-group">
     <span class="ctrl-label">Pace</span>
     <input id="speed" type="range" min="1" max="40" value="7" step="1" aria-label="Moves per second">
   </div>
-  <div class="ctrl-group">
-    <input id="fillColor" type="color" value="#78838c" aria-label="Default color for newly closed regions">
+  <div class="ctrl-group swatches">
+    <input id="col5" type="color" value="#FF2E2E" title="Pentagons F5" aria-label="Color for faces with five sides">
+    <input id="col6" type="color" value="#22E04A" title="Hexagons F6" aria-label="Color for faces with six sides">
+    <input id="col7" type="color" value="#2E7DFF" title="Wells n&gt;6" aria-label="Color for faces with more than six sides">
   </div>
   <div class="ctrl-group">
-    <button id="btnClose" aria-label="Promote every small face and complete the map; the ocean stays open">Close map</button>
-    <button id="btnExport" title="Export" aria-label="Save every face's vertex list to a JSON file">
+    <button id="btnExport" class="icon-btn" title="Export" aria-label="Save every face's vertex list to a JSON file">
       <svg class="ico-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
            stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">
         <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
@@ -142,7 +159,7 @@
         <line x1="12" y1="15" x2="12" y2="3"/>
       </svg>
     </button>
-    <button id="btnReset" title="Restart" aria-label="Restart with a new random island">
+    <button id="btnReset" class="icon-btn" title="Restart" aria-label="Restart with a new random island">
       <svg class="ico-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
            stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">
         <polyline points="1 4 1 10 7 10"/>
@@ -290,16 +307,18 @@
    to tail. A face's `interior` list therefore accumulates exactly
    `n` edges by the time its last coastal edge is buried (coastCount
    hits 0); sealFace() chains them into a closed planar polygon
-   (`f.poly`) right at that moment and stamps the face with whatever
-   color is currently loaded in the "Fill" swatch. draw() fills every
-   sealed face's polygon (only when every one of its projected points
-   is on the near side of the sphere — a face straddling the horizon
-   is left unfilled that frame rather than drawn wrong) underneath the
-   border strokes. Clicking (not dragging) the canvas unprojects the
-   pointer to a planar point via the inverse of projTo's camera math,
-   ray-casts it against every sealed face's polygon, and — on a hit —
-   opens a native color input pre-loaded with that face's current
-   color so a single region can be recolored on its own. Purely
+   (`f.poly`) right at that moment. draw() fills that polygon (only
+   when every one of its projected points is on the near side of the
+   sphere — a face straddling the horizon is left unfilled that frame
+   rather than drawn wrong) underneath the border strokes. v11 fills
+   coastal faces the same way, chaining `interior` plus the face's
+   remaining coast edges per frame instead of reading the cache, so a
+   face is visible before it seals and its fill can change on sealing.
+   Clicking (not dragging) the canvas unprojects the pointer to a
+   planar point via the inverse of projTo's camera math, ray-casts it
+   against every filled face's polygon, and — on a hit — opens a
+   native color input pre-loaded with that face's current color so a
+   single region can be recolored on its own. Purely
    additive: no combinatorial rule, split point, or drawn border
    changes; the new bookkeeping only ever reads geometry that other
    moves already compute (sp.gB, sq.gA, each whole's own points).
@@ -374,7 +393,25 @@ let inkLines;                      // every border ever drawn, as planar polylin
 let fallbackCount;                 // how many times attemptMove() hit the F3 fallback
 let closing, closeDone;            // v6: "Close map" endgame state
 let closeToastTimer=null;          // auto-dismiss handle for the "map closed" message
-let defaultColor='#78838c';        // v9: current auto-fill color, stamped onto a face the moment it seals
+/* v11: a face's fill is read from its side count, not stamped once at seal time — F5, F6 and the
+   n>6 wells each own a hue, shown bright while the face still touches the ocean and darkened the
+   moment it seals. Faces below five sides are still growing towards a category and stay unfilled,
+   which is exactly the set the construction never buries. A face the user recolors by hand keeps
+   that literal color (f.color) and opts out of the scheme. */
+const catColors={f5:'#FF2E2E', f6:'#22E04A', f7:'#2E7DFF'};
+const SEALED_SHADE=0.55;           // how far a sealed face's hue is dimmed towards black
+function faceCategory(f){ return f.n===5?'f5' : f.n===6?'f6' : f.n>6?'f7' : null; }
+function shade(hex, k){
+  const v=parseInt(hex.slice(1),16);
+  const r=Math.round(((v>>16)&255)*k), g=Math.round(((v>>8)&255)*k), b=Math.round((v&255)*k);
+  return '#'+((1<<24)|(r<<16)|(g<<8)|b).toString(16).slice(1);
+}
+function faceFill(f){              // null = this face isn't filled at all yet
+  if(f.color) return f.color;
+  const cat=faceCategory(f);
+  if(!cat) return null;
+  return f.sealed ? shade(catColors[cat], SEALED_SHADE) : catColors[cat];
+}
 
 function reset(){
   faces=[]; moves=0; maxR=R0; full=false; inkLines=[]; fallbackCount=0;
@@ -392,9 +429,9 @@ function reset(){
                                     // face (ocean isn't counted) the identity can't hold yet —
                                     // firstMove() is what fixes that
   running=false;
-  btnRun.disabled=false; btnRun.textContent='Start'; btnRun.classList.remove('primary');
+  btnRun.disabled=false; setRunIcon('play'); btnRun.classList.remove('primary');
   fullToast.classList.remove('show');
-  btnClose.disabled=false; btnClose.textContent='Close map';
+  btnClose.disabled=false; btnClose.title='Close map';
   clearTimeout(closeToastTimer);
   closeToast.classList.remove('show');
 }
@@ -469,8 +506,8 @@ function chainInterior(edges){
   }
   return poly;
 }
-function sealFace(f){
-  f.sealed=true; f.color=defaultColor; f.poly=chainInterior(f.interior);
+function sealFace(f){              // v11: no color stamped here — faceFill() derives it from f.n and f.sealed
+  f.sealed=true; f.poly=chainInterior(f.interior);
 }
 
 /* ---------- v10: live per-face vertex cycle ----------
@@ -681,8 +718,8 @@ function showCloseToast(){
 }
 function finishClose(){          /* nothing is buried: the ocean and its coast faces stay open forever */
   closing=false; closeDone=true; running=false;
-  btnRun.disabled=false; btnRun.textContent='Start'; btnRun.classList.remove('primary');
-  btnClose.disabled=false; btnClose.textContent='Close map';
+  btnRun.disabled=false; setRunIcon('play'); btnRun.classList.remove('primary');
+  btnClose.disabled=false; btnClose.title='Close map';
   showCloseToast();
 }
 function closeStep(){
@@ -722,7 +759,7 @@ function check(){   /* the ocean counts as one face of degree C, so Σ(6−n)Fn 
 function setFull(){
   if(full) return;
   full=true; running=false;
-  btnRun.disabled=true; btnRun.textContent='Full';
+  btnRun.disabled=true; setRunIcon('done');
   btnRun.classList.remove('primary');
   fullToast.classList.add('show');
 }
@@ -850,7 +887,10 @@ function unprojectClick(clientX, clientY){
 function faceAt(clientX, clientY){
   const pt=unprojectClick(clientX,clientY);
   if(!pt) return null;
-  for(const f of faces) if(f.sealed && f.poly && pointInPoly(pt,f.poly)) return f;
+  for(const f of faces){                        // v11: coastal faces are filled too, so they're clickable as well
+    const poly = f.sealed ? f.poly : f.livePoly;
+    if(poly && faceFill(f) && pointInPoly(pt,poly)) return f;
+  }
   return null;
 }
 
@@ -874,20 +914,35 @@ function draw(){
 
   // the globe (fixed radius Rs, never rescaled)
   const g=ctx.createRadialGradient(-Rs*.30,-Rs*.36,Rs*.1, 0,0,Rs);
-  g.addColorStop(0,'#17314F'); g.addColorStop(.55,'#102440'); g.addColorStop(1,'#0A1729');
+  g.addColorStop(0,'#F4FBFF'); g.addColorStop(.55,'#DCEFFA'); g.addColorStop(1,'#B7D8ED');
   ctx.fillStyle=g; ctx.beginPath(); ctx.arc(0,0,Rs,0,7); ctx.fill();
 
   const GF=new Path2D(); addGrat(GF);
-  ctx.strokeStyle='rgba(199,229,240,.09)'; ctx.lineWidth=1/scale; ctx.stroke(GF);
-  ctx.strokeStyle='rgba(199,229,240,.30)'; ctx.lineWidth=1.6/scale;
+  // v11: the globe is pale now, so everything drawn on open water is ink rather than light
+  ctx.strokeStyle='rgba(40,95,140,.16)'; ctx.lineWidth=1/scale; ctx.stroke(GF);
+  ctx.strokeStyle='rgba(50,105,150,.38)'; ctx.lineWidth=1.6/scale;
   ctx.beginPath(); ctx.arc(0,0,Rs,0,7); ctx.stroke();
 
-  // v9: closed regions, filled underneath the border strokes — skipped for a frame if any of
-  // a face's boundary points currently fall on the far side of the sphere
+  // v9/v11: every face that has reached a category is filled underneath the border strokes — a
+  // sealed one from its cached polygon, a coastal one re-chained each frame from its interior
+  // walls plus the coast edges it still owns (that union is its full boundary, by the same
+  // bookkeeping that lets sealFace chain `interior` alone once the last coast edge is buried).
+  // Skipped for a frame if any of a face's boundary points fall on the far side of the sphere.
+  const coastByFace=new Map();
+  for(const e of coast){ const l=coastByFace.get(e.face); l ? l.push(e) : coastByFace.set(e.face,[e]); }
   for(const f of faces){
-    if(!f.sealed || !f.poly) continue;
+    const fill=faceFill(f);
+    if(!fill) continue;
+    let poly;
+    if(f.sealed) poly=f.poly;
+    else {
+      const ce=coastByFace.get(f);
+      if(!ce) continue;
+      poly = f.livePoly = chainInterior([...f.interior, ...ce]);
+    }
+    if(!poly) continue;
     const scr=[]; let allVisible=true;
-    for(const pt of f.poly){
+    for(const pt of poly){
       const o={}; projTo(pt,o);
       if(!o.v){ allVisible=false; break; }
       scr.push(o);
@@ -897,7 +952,7 @@ function draw(){
     path.moveTo(scr[0].x, scr[0].y);
     for(let i=1;i<scr.length;i++) path.lineTo(scr[i].x, scr[i].y);
     path.closePath();
-    ctx.fillStyle=f.color||defaultColor;
+    ctx.fillStyle=fill;
     ctx.fill(path);
   }
 
@@ -908,13 +963,13 @@ function draw(){
   ctx.strokeStyle='rgba(215,238,244,.10)'; ctx.lineWidth=1/scale;   ctx.stroke(IB);
   ctx.strokeStyle='rgba(215,238,244,.45)'; ctx.lineWidth=1.1/scale; ctx.stroke(IF);
 
-  // the luminous coastline
+  // the inked coastline — a dark line with a soft wash, the pale-sea counterpart of the old glow
   const coastLines=coast.map(ptsOf).map(densify);
   const CF=new Path2D(), CB=new Path2D();
   addLines(coastLines, CF, CB);
-  ctx.strokeStyle='rgba(180,230,255,.14)'; ctx.lineWidth=2/scale;   ctx.stroke(CB);
-  ctx.strokeStyle='rgba(150,220,255,.20)'; ctx.lineWidth=6/scale;   ctx.stroke(CF);
-  ctx.strokeStyle='rgba(222,244,252,.95)'; ctx.lineWidth=1.9/scale; ctx.stroke(CF);
+  ctx.strokeStyle='rgba(30,80,125,.10)'; ctx.lineWidth=2/scale;   ctx.stroke(CB);
+  ctx.strokeStyle='rgba(40,110,165,.18)'; ctx.lineWidth=6/scale;  ctx.stroke(CF);
+  ctx.strokeStyle='rgba(12,52,92,.92)';   ctx.lineWidth=1.9/scale; ctx.stroke(CF);
 }
 
 /* ---------- v10: export every face's vertex list ----------
@@ -952,21 +1007,33 @@ function exportVerticesFile(){
 
 /* ---------- loop, controls, stats ---------- */
 const btnRun=document.getElementById('btnRun');
+const btnRunIcon=document.getElementById('btnRunIcon');
+const RUN_ICONS={                  // swapped into btnRunIcon to reflect state, since the button carries no label text
+  play:'<polygon points="6 3 20 12 6 21 6 3"/>',
+  pause:'<rect x="6" y="4" width="4" height="16" rx="1"/><rect x="14" y="4" width="4" height="16" rx="1"/>',
+  done:'<polyline points="20 6 9 17 4 12"/>'
+};
+function setRunIcon(state){        // state: 'play' | 'pause' | 'done'
+  btnRunIcon.innerHTML=RUN_ICONS[state];
+  btnRun.title=state==='play'?'Start':state==='pause'?'Stop':'Full';
+}
 const btnReset=document.getElementById('btnReset');
 const btnClose=document.getElementById('btnClose');
 const btnExport=document.getElementById('btnExport');
 const speedEl=document.getElementById('speed');
 const fullToast=document.getElementById('fullToast');
 const closeToast=document.getElementById('closeToast');
-const fillColorEl=document.getElementById('fillColor');
 const regionColorPicker=document.getElementById('regionColorPicker');
+for(const [cat,id] of [['f5','col5'],['f6','col6'],['f7','col7']]){
+  const el=document.getElementById(id);
+  el.value=catColors[cat];
+  el.oninput=()=>{ catColors[cat]=el.value; };   // every face of that category repaints on the next frame
+}
 let pendingColorFace=null;
-fillColorEl.value=defaultColor;
-fillColorEl.oninput=()=>{ defaultColor=fillColorEl.value; };
 regionColorPicker.oninput=()=>{ if(pendingColorFace) pendingColorFace.color=regionColorPicker.value; };
 function openColorPicker(f){
   pendingColorFace=f;
-  regionColorPicker.value=f.color||defaultColor;
+  regionColorPicker.value=faceFill(f)||catColors.f5;
   regionColorPicker.click();
 }
 if(matchMedia('(prefers-reduced-motion: reduce)').matches){
@@ -974,7 +1041,7 @@ if(matchMedia('(prefers-reduced-motion: reduce)').matches){
 btnRun.onclick=()=>{
   if(full) return;
   running=!running;
-  btnRun.textContent=running?'Stop':'Start';
+  setRunIcon(running?'pause':'play');
   if(running){ clearTimeout(closeToastTimer); closeToast.classList.remove('show'); }   // resuming growth makes the "closed" state stale
 };
 btnReset.onclick=()=>{ reset(); updateStats(); };
@@ -982,11 +1049,11 @@ document.getElementById('closeToastX').onclick=()=>{ clearTimeout(closeToastTime
 btnClose.onclick=()=>{
   if(closing || moves===0) return;
   closeDone=false;                     // allow re-closing later if growth reintroduces small faces
-  closing=true; running=true; btnRun.disabled=false; btnRun.textContent='Stop';
+  closing=true; running=true; btnRun.disabled=false; setRunIcon('pause');
   fullToast.classList.remove('show');
   clearTimeout(closeToastTimer);
   closeToast.classList.remove('show');
-  btnClose.disabled=true; btnClose.textContent='Closing…';
+  btnClose.disabled=true; btnClose.title='Closing…';
 };
 btnExport.onclick=()=>exportVerticesFile();
 
@@ -1053,11 +1120,12 @@ reset();
 
 let last=performance.now(), acc=0, statT=0;
 function updateStats(){
-  let f5=0,w=0; for(const f of faces){ if(f.n===5)f5++; else if(f.n>6)w++; }
+  let f5=0,f6=0,w=0; for(const f of faces){ if(f.n===5)f5++; else if(f.n===6)f6++; else if(f.n>6)w++; }
   document.getElementById('sF').textContent=faces.length;
   document.getElementById('sO').textContent=1;   // the ocean is a face of the map and is never buried
   document.getElementById('sC').textContent=coast.length;
   document.getElementById('s5').textContent=f5;
+  document.getElementById('s6').textContent=f6;
   document.getElementById('sW').textContent=w;
   document.getElementById('sM').textContent=moves;
   document.getElementById('sFB').textContent=fallbackCount;
