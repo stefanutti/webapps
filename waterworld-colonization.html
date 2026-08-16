@@ -25,22 +25,16 @@
   .ledger{top:22px;right:24px;min-width:225px;font-family:ui-monospace,'SF Mono',Menlo,Consolas,monospace}
   .ledger h2{font-family:Georgia,'Times New Roman',serif;font-style:italic;font-weight:400;
              font-size:26px;letter-spacing:.01em;color:var(--foam);margin-bottom:10px}
-  .row{display:flex;justify-content:space-between;font-size:12.5px;padding:3px 0;color:var(--foam)}
-  .row .k{color:var(--foam-dim)}
+  .row{display:flex;justify-content:space-between;gap:14px;font-size:12.5px;padding:3px 0;color:var(--foam)}
+  .row .k{color:var(--foam-dim);white-space:nowrap}
   .inv{margin-top:10px;padding-top:9px;border-top:1px solid var(--hairline);font-size:12px}
   .inv b{font-weight:400}
   .inv .ok{color:var(--ok)} .inv .bad{color:var(--bad)} .inv .warn{color:var(--warn)}
-  .legend{bottom:24px;left:24px;font-size:11.5px;line-height:1.9;color:var(--foam-dim)}
-  .swatch{display:inline-block;width:22px;height:0;border-top:2px solid #5B9FD4;
-          margin-right:8px;vertical-align:3px}
-  .swatch.dim{border-top:1px solid rgba(215,238,244,.45)}
   .controls{bottom:24px;right:24px;display:flex;flex-wrap:wrap;align-items:center;
          justify-content:flex-end;gap:0;max-width:calc(100vw - 48px);padding:6px 8px}
   .ctrl-group{display:flex;align-items:center;gap:8px;padding:0 8px}
   .ctrl-group.swatches{gap:5px}
   .ctrl-group+.ctrl-group{border-left:1px solid var(--hairline)}
-  .ctrl-label{font-size:11px;letter-spacing:.12em;color:var(--foam-dim);
-         font-family:ui-monospace,'SF Mono',Menlo,Consolas,monospace}
   button{font-family:inherit;font-size:12.5px;letter-spacing:.06em;color:var(--foam);cursor:pointer;
          background:transparent;border:1px solid var(--hairline);border-radius:8px;padding:7px 14px;
          display:inline-flex;align-items:center;gap:6px;
@@ -63,27 +57,23 @@
   .toast-x{border:none;background:transparent;padding:0 0 0 10px;font-size:16px;line-height:1;
            color:var(--foam-dim);vertical-align:-1px}
   .toast-x:hover{color:var(--foam);border-color:transparent}
-  .hint{bottom:24px;left:50%;transform:translateX(-50%);font-size:11px;letter-spacing:.12em;
-        color:var(--foam-dim);text-align:center;line-height:1.7;
-        font-family:ui-monospace,'SF Mono',Menlo,Consolas,monospace}
   @media (max-width:760px){
     .panel{padding:10px 12px}
-    .cartouche{top:14px;left:14px;max-width:46vw}
+    .cartouche{top:14px;left:14px;max-width:36vw}
     .eyebrow{font-size:9px}
     .title{font-size:17px;white-space:normal}
     .subtitle{display:none}
-    .ledger{top:14px;right:14px;min-width:0;max-width:46vw}
+    /* v12: sized to its widest row instead of a fixed slice of the viewport, so the labels keep
+       clear of the numbers however many digits the counters reach */
+    .ledger{top:14px;right:14px;min-width:0;width:max-content;max-width:62vw}
     .ledger h2{font-size:16px;margin-bottom:6px}
-    .row{font-size:10.5px;padding:2px 0}
+    .row{font-size:10.5px;padding:2px 0;gap:10px}
     .inv{font-size:9.5px;margin-top:6px;padding-top:6px}
-    .legend{display:none}
-    .hint{display:none}
     .controls{left:10px;right:10px;bottom:10px;max-width:calc(100vw - 20px);
               justify-content:center;gap:4px 0;padding:6px}
     .ctrl-group{padding:0 7px;gap:6px}
     button{padding:6px 10px;font-size:11px}
     .icon-btn{padding:7px}
-    .ctrl-label{font-size:9.5px}
     input[type=range]{width:64px}
     #fullToast{bottom:150px}
     #closeToast{bottom:190px!important}
@@ -114,16 +104,9 @@
   <div class="inv"><b>Σ(6−n)F<sub>n</sub> − C = <span id="sInv" class="ok">6 ✓</span></b></div>
 </div>
 
-<div class="panel legend">
-  <span class="swatch"></span>Coastline<br>
-  <span class="swatch dim"></span>Inland borders
-</div>
-
 <div class="panel full-toast" id="fullToast">The island now fills the globe — press Restart to grow a new one.</div>
 <div class="panel full-toast" id="closeToast" style="bottom:118px">Now every face (included the ocean), coastal or landlocked, has at least five sides.
   <button class="toast-x" id="closeToastX" aria-label="Dismiss message">×</button></div>
-
-<div class="panel hint">Drag to rotate, Scroll to soom</div>
 
 <div class="panel controls">
   <div class="ctrl-group">
@@ -142,8 +125,7 @@
     </button>
   </div>
   <div class="ctrl-group">
-    <span class="ctrl-label">Pace</span>
-    <input id="speed" type="range" min="1" max="40" value="7" step="1" aria-label="Moves per second">
+    <input id="speed" type="range" min="1" max="40" value="7" step="1" title="Pace" aria-label="Moves per second">
   </div>
   <div class="ctrl-group swatches">
     <input id="col5" type="color" value="#FF2E2E" title="Pentagons F5" aria-label="Color for faces with five sides">
@@ -216,7 +198,7 @@
    step relative to itself, however far ahead or behind its
    neighbors are.
 
-   The camera (tilt/yaw/zoom) is user-controlled: drag to orbit,
+   The camera (orientation/zoom) is user-controlled: drag to orbit,
    scroll or pinch to zoom. It only rotates/scales the view — the
    construction itself and Rs are untouched by it.
 
@@ -344,10 +326,35 @@ const PHI_MAX = 2.85;              // cap edge: how close to the antipodal point
 const Rs = 620;                    // FIXED sphere radius (world units) — never rescaled
 const RMAX = Rs * PHI_MAX;         // max planar radius the construction may reach
 
-/* ---------- camera: tilt (pitch), yaw (spin), zoom — all user-controlled ---------- */
-let tilt = 0.5, yaw = 0, zoom = 1;
-let CT = Math.cos(tilt), ST = Math.sin(tilt);
-let CY = Math.cos(yaw), SY = Math.sin(yaw);
+/* ---------- camera: orientation + zoom, both user-controlled ----------
+   v13: the orientation is a 3x3 rotation carrying a world unit vector into the screen frame
+   (x right, y down, z towards the viewer), not a yaw/tilt pair. Two Euler angles give the sphere
+   only two degrees of freedom, and pinning a grabbed point under the pointer needs three: with
+   yaw/tilt a point near the left or right limb cannot be followed at all, which is why the drag
+   used to behave differently depending on where it started. A matrix has no such preferred axis,
+   so drag() can simply rotate the grabbed point onto the pointer and the globe turns under the
+   finger without sliding. */
+let zoom = 1;
+let m0=1,m1=0,m2=0, m3=0,m4=1,m5=0, m6=0,m7=0,m8=1;
+function camSet(m){ m0=m[0];m1=m[1];m2=m[2]; m3=m[3];m4=m[4];m5=m[5]; m6=m[6];m7=m[7];m8=m[8]; }
+function camGet(){ return [m0,m1,m2, m3,m4,m5, m6,m7,m8]; }
+function camApply(u){ return [m0*u[0]+m1*u[1]+m2*u[2], m3*u[0]+m4*u[1]+m5*u[2], m6*u[0]+m7*u[1]+m8*u[2]]; }
+function camMul(A,B){                        // A·B, both row-major
+  const C=new Array(9);
+  for(let r=0;r<3;r++) for(let c=0;c<3;c++)
+    C[r*3+c]=A[r*3]*B[c] + A[r*3+1]*B[3+c] + A[r*3+2]*B[6+c];
+  return C;
+}
+function rotBetween(a,b){                    // the rotation carrying unit vector a onto unit vector b
+  const cx=a[1]*b[2]-a[2]*b[1], cy=a[2]*b[0]-a[0]*b[2], cz=a[0]*b[1]-a[1]*b[0];
+  const s=Math.hypot(cx,cy,cz), c=a[0]*b[0]+a[1]*b[1]+a[2]*b[2];
+  if(s<1e-9) return [1,0,0, 0,1,0, 0,0,1];   // already aligned; no drag step is ever antipodal
+  const kx=cx/s, ky=cy/s, kz=cz/s, t=1-c;    // Rodrigues about the normalised axis
+  return [ c+kx*kx*t,    kx*ky*t-kz*s, kx*kz*t+ky*s,
+           ky*kx*t+kz*s, c+ky*ky*t,    ky*kz*t-kx*s,
+           kz*kx*t-ky*s, kz*ky*t+kx*s, c+kz*kz*t ];
+}
+camSet([1,0,0, 0,Math.cos(.5),-Math.sin(.5), 0,Math.sin(.5),Math.cos(.5)]);   // the opening framing
 const clamp=(v,lo,hi)=>Math.max(lo,Math.min(hi,v));
 
 addEventListener('resize', resize); resize();
@@ -395,21 +402,23 @@ let closing, closeDone;            // v6: "Close map" endgame state
 let closeToastTimer=null;          // auto-dismiss handle for the "map closed" message
 /* v11: a face's fill is read from its side count, not stamped once at seal time — F5, F6 and the
    n>6 wells each own a hue, shown bright while the face still touches the ocean and darkened the
-   moment it seals. Faces below five sides are still growing towards a category and stay unfilled,
-   which is exactly the set the construction never buries. A face the user recolors by hand keeps
-   that literal color (f.color) and opts out of the scheme. */
-const catColors={f5:'#FF2E2E', f6:'#22E04A', f7:'#2E7DFF'};
+   moment it seals. A face still under five sides has not reached one of those categories yet and
+   takes a plain celeste, a shade deeper than the water it is sitting in; that set is exactly the
+   one the construction never buries, so in practice it only ever shows the undarkened shade.
+   A face the user recolors by hand keeps that literal color (f.color) and opts out of the scheme. */
+const catColors={small:'#93C3E2', f5:'#FF2E2E', f6:'#22E04A', f7:'#2E7DFF'};
 const SEALED_SHADE=0.55;           // how far a sealed face's hue is dimmed towards black
-function faceCategory(f){ return f.n===5?'f5' : f.n===6?'f6' : f.n>6?'f7' : null; }
+const OCEAN_WASH=0.24;             // v12: alpha of the ocean's category color over the globe
+const FAR_SIDE_WASH=0.22;          // v12: alpha of land seen through the globe from the far side
+function faceCategory(f){ return f.n===5?'f5' : f.n===6?'f6' : f.n>6?'f7' : 'small'; }
 function shade(hex, k){
   const v=parseInt(hex.slice(1),16);
   const r=Math.round(((v>>16)&255)*k), g=Math.round(((v>>8)&255)*k), b=Math.round((v&255)*k);
   return '#'+((1<<24)|(r<<16)|(g<<8)|b).toString(16).slice(1);
 }
-function faceFill(f){              // null = this face isn't filled at all yet
+function faceFill(f){
   if(f.color) return f.color;
   const cat=faceCategory(f);
-  if(!cat) return null;
   return f.sealed ? shade(catColors[cat], SEALED_SHADE) : catColors[cat];
 }
 
@@ -769,9 +778,10 @@ function projTo(p, out){
   if(p._r===undefined){ p._r=Math.hypot(p.x,p.y);
     const a=Math.atan2(p.y,p.x); p._c=Math.cos(a); p._s=Math.sin(a); }
   const phi=Math.min(3.12, p._r/Rs), sp=Math.sin(phi), cp=Math.cos(phi);
-  const ca=p._c*CY - p._s*SY, sa=p._s*CY + p._c*SY;    // yaw: spin around the pole axis
-  const x3=sp*ca, y3=sp*sa;
-  out.x=x3*Rs; out.y=(y3*CT - cp*ST)*Rs; out.v=(y3*ST + cp*CT)>=0;
+  const ux=sp*p._c, uy=sp*p._s;                        // the world unit vector; its z is cp
+  out.x=(m0*ux + m1*uy + m2*cp)*Rs;
+  out.y=(m3*ux + m4*uy + m5*cp)*Rs;
+  out.v=(m6*ux + m7*uy + m8*cp)>=0;
 }
 const _a={}, _b={};
 function addLines(lists, F, B){
@@ -858,8 +868,8 @@ function addGrat(F){
   for(const P of grat){
     let ax,ay,av,first=true;
     for(const g of P){
-      const gx=g[0]*CY - g[1]*SY, gy=g[0]*SY + g[1]*CY;  // yaw: spin around the pole axis
-      const y=(gy*CT - g[2]*ST)*Rs, x=gx*Rs, v=(gy*ST + g[2]*CT)>=0;
+      const x=(m0*g[0] + m1*g[1] + m2*g[2])*Rs, y=(m3*g[0] + m4*g[1] + m5*g[2])*Rs;
+      const v=(m6*g[0] + m7*g[1] + m8*g[2])>=0;
       if(!first && av && v){ F.moveTo(ax,ay); F.lineTo(x,y); }
       ax=x; ay=y; av=v; first=false;
     }
@@ -880,8 +890,8 @@ function unprojectClick(clientX, clientY){
   const X=(clientX-W/2)/scale/Rs, Yp=(clientY-H/2)/scale/Rs, rr=X*X+Yp*Yp;
   if(rr>1) return null;                                   // outside the globe's silhouette
   const Zp=Math.sqrt(1-rr);
-  const Y=Yp*CT+Zp*ST, Z=-Yp*ST+Zp*CT;                     // undo the tilt rotation
-  const phi=Math.acos(clamp(Z,-1,1)), theta=Math.atan2(Y,X)-yaw, r=phi*Rs;
+  const ux=m0*X+m3*Yp+m6*Zp, uy=m1*X+m4*Yp+m7*Zp, uz=m2*X+m5*Yp+m8*Zp;   // camᵀ: a rotation's inverse
+  const phi=Math.acos(clamp(uz,-1,1)), theta=Math.atan2(uy,ux), r=phi*Rs;
   return {x:r*Math.cos(theta), y:r*Math.sin(theta)};
 }
 function faceAt(clientX, clientY){
@@ -900,8 +910,6 @@ let stars=[]; (function(){ for(let s=0;s<130;s++)
 
 /* ---------- render ---------- */
 function draw(){
-  CT=Math.cos(tilt); ST=Math.sin(tilt);
-  CY=Math.cos(yaw);  SY=Math.sin(yaw);
   computeScale();
   ctx.setTransform(DPR,0,0,DPR,0,0);
   ctx.clearRect(0,0,W,H);
@@ -917,6 +925,18 @@ function draw(){
   g.addColorStop(0,'#F4FBFF'); g.addColorStop(.55,'#DCEFFA'); g.addColorStop(1,'#B7D8ED');
   ctx.fillStyle=g; ctx.beginPath(); ctx.arc(0,0,Rs,0,7); ctx.fill();
 
+  // v12: the ocean is a face of the map too, of degree C, so it earns its category color by the
+  // same rule as the land — and it is never buried, so it always wears the open, bright shade.
+  // Laid on as a wash rather than a flat fill: the sphere's shading, the graticule and the far-side
+  // geometry all have to stay readable through the water.
+  const oceanFill=faceFill({n:coast.length, sealed:false, color:null});
+  if(oceanFill){
+    ctx.save();
+    ctx.globalAlpha=OCEAN_WASH;
+    ctx.fillStyle=oceanFill; ctx.beginPath(); ctx.arc(0,0,Rs,0,7); ctx.fill();
+    ctx.restore();
+  }
+
   const GF=new Path2D(); addGrat(GF);
   // v11: the globe is pale now, so everything drawn on open water is ink rather than light
   ctx.strokeStyle='rgba(40,95,140,.16)'; ctx.lineWidth=1/scale; ctx.stroke(GF);
@@ -927,9 +947,12 @@ function draw(){
   // sealed one from its cached polygon, a coastal one re-chained each frame from its interior
   // walls plus the coast edges it still owns (that union is its full boundary, by the same
   // bookkeeping that lets sealFace chain `interior` alone once the last coast edge is buried).
-  // Skipped for a frame if any of a face's boundary points fall on the far side of the sphere.
+  // v12: a face wholly on the far side is filled too, washed out, so the water shows colored land
+  // behind it and not just its outline. A face keeps its solid fill for as long as any part of it
+  // is still on this side — it only drops to the wash once all of it has rounded the horizon.
   const coastByFace=new Map();
   for(const e of coast){ const l=coastByFace.get(e.face); l ? l.push(e) : coastByFace.set(e.face,[e]); }
+  const nearFaces=[], farFaces=[];
   for(const f of faces){
     const fill=faceFill(f);
     if(!fill) continue;
@@ -941,33 +964,48 @@ function draw(){
       poly = f.livePoly = chainInterior([...f.interior, ...ce]);
     }
     if(!poly) continue;
-    const scr=[]; let allVisible=true;
+    const scr=[]; let visible=0;
     for(const pt of poly){
       const o={}; projTo(pt,o);
-      if(!o.v){ allVisible=false; break; }
+      if(o.v) visible++;
       scr.push(o);
     }
-    if(!allVisible) continue;
+    if(visible && visible!==scr.length){
+      // straddling the horizon: a point past the limb projects back INSIDE the disc, which would
+      // fold the outline over itself. Pushing those points out onto the limb instead cuts the
+      // solid fill along the horizon, which is what the eye expects of land rounding the edge.
+      for(const o of scr) if(!o.v){
+        const d=Math.hypot(o.x,o.y)||1;
+        o.x*=Rs/d; o.y*=Rs/d;
+      }
+    }
     const path=new Path2D();
     path.moveTo(scr[0].x, scr[0].y);
     for(let i=1;i<scr.length;i++) path.lineTo(scr[i].x, scr[i].y);
     path.closePath();
-    ctx.fillStyle=fill;
-    ctx.fill(path);
+    (visible ? nearFaces : farFaces).push({path, fill});
   }
+  // the far hemisphere goes down first: both hemispheres project onto the same disc, so drawing it
+  // after the near one would let ghosts paint over solid land
+  ctx.save();
+  ctx.globalAlpha=FAR_SIDE_WASH;
+  for(const {path,fill} of farFaces){ ctx.fillStyle=fill; ctx.fill(path); }
+  ctx.restore();
+  for(const {path,fill} of nearFaces){ ctx.fillStyle=fill; ctx.fill(path); }
 
-  // borders: far side first (faint), then near side
+  // borders: far side first (faint), then near side. v12: the far-side strokes are what makes the
+  // globe read as translucent rather than solid, so on the pale water they too have to be ink.
   ctx.lineJoin='round'; ctx.lineCap='round';
   const IF=new Path2D(), IB=new Path2D();
   addLines(inkLines.map(densify), IF, IB);
-  ctx.strokeStyle='rgba(215,238,244,.10)'; ctx.lineWidth=1/scale;   ctx.stroke(IB);
+  ctx.strokeStyle='rgba(25,70,110,.15)';   ctx.lineWidth=1/scale;   ctx.stroke(IB);
   ctx.strokeStyle='rgba(215,238,244,.45)'; ctx.lineWidth=1.1/scale; ctx.stroke(IF);
 
   // the inked coastline — a dark line with a soft wash, the pale-sea counterpart of the old glow
   const coastLines=coast.map(ptsOf).map(densify);
   const CF=new Path2D(), CB=new Path2D();
   addLines(coastLines, CF, CB);
-  ctx.strokeStyle='rgba(30,80,125,.10)'; ctx.lineWidth=2/scale;   ctx.stroke(CB);
+  ctx.strokeStyle='rgba(20,65,110,.26)'; ctx.lineWidth=2/scale;   ctx.stroke(CB);
   ctx.strokeStyle='rgba(40,110,165,.18)'; ctx.lineWidth=6/scale;  ctx.stroke(CF);
   ctx.strokeStyle='rgba(12,52,92,.92)';   ctx.lineWidth=1.9/scale; ctx.stroke(CF);
 }
@@ -1058,22 +1096,27 @@ btnClose.onclick=()=>{
 btnExport.onclick=()=>exportVerticesFile();
 
 /* ---------- camera interaction: drag to orbit, scroll/pinch to zoom ---------- */
-const ROT_SPEED = 0.008;           // rad per pixel dragged, at zoom=1 — scaled by 1/zoom so a
-                                    // dragged pixel always spans the same visible angle on screen
 const CLICK_SLOP = 4, CLICK_MS = 500;   // v9: how still/fast a press must be to count as a click, not a drag
-let dragging=false, lastX=0, lastY=0, downX=0, downY=0, downTime=0, moved=false;
+/* v13: the pointer is read as a point on the globe itself, and the drag rotates the point grabbed
+   at pointerdown onto the point under the pointer now — the sphere turns under the finger without
+   sliding. Composing from the orientation captured at pointerdown (rather than stepping frame to
+   frame) keeps the grabbed point exactly pinned instead of creeping over a long drag. */
+function ballVec(clientX, clientY){
+  const X=(clientX-W/2)/scale/Rs, Y=(clientY-H/2)/scale/Rs, rr=X*X+Y*Y;
+  if(rr<=1) return [X, Y, Math.sqrt(1-rr)];
+  const d=Math.sqrt(rr);                // pointer is off the globe: hold on at the silhouette
+  return [X/d, Y/d, 0];
+}
+let dragging=false, dragFrom=null, dragCam=null, downX=0, downY=0, downTime=0, moved=false;
 canvas.addEventListener('pointerdown', e=>{
-  dragging=true; lastX=e.clientX; lastY=e.clientY;
+  dragging=true; dragFrom=ballVec(e.clientX,e.clientY); dragCam=camGet();
   downX=e.clientX; downY=e.clientY; downTime=performance.now(); moved=false;
   canvas.setPointerCapture(e.pointerId); canvas.classList.add('grabbing');
 });
 canvas.addEventListener('pointermove', e=>{
   if(!dragging) return;
   if(!moved && Math.hypot(e.clientX-downX, e.clientY-downY)>CLICK_SLOP) moved=true;
-  const rot=ROT_SPEED/zoom;
-  yaw += (e.clientX-lastX)*rot;
-  tilt -= (e.clientY-lastY)*rot;
-  lastX=e.clientX; lastY=e.clientY;
+  camSet(camMul(rotBetween(dragFrom, ballVec(e.clientX,e.clientY)), dragCam));
 });
 addEventListener('pointerup', e=>{
   dragging=false; canvas.classList.remove('grabbing');
@@ -1090,19 +1133,12 @@ canvas.addEventListener('wheel', e=>{
 }, {passive:false});
 
 const DBLCLICK_ZOOM = 2.4;
-function angDiff(a,b){ let d=(a-b)%(2*Math.PI); if(d>Math.PI) d-=2*Math.PI; if(d<-Math.PI) d+=2*Math.PI; return Math.abs(d); }
 canvas.addEventListener('dblclick', e=>{
   const pt=unprojectClick(e.clientX, e.clientY);
   if(!pt) return;                                        // double-click missed the globe
-  const a=Math.atan2(pt.y,pt.x), phi=Math.hypot(pt.x,pt.y)/Rs;
-  // two camera states center this point (a yaw/tilt +pi/-flip pair) — keep the one nearer the current view
-  const cands=[{yaw:Math.PI/2-a, tilt:phi}, {yaw:-Math.PI/2-a, tilt:-phi}];
-  let best=cands[0], bestDist=Infinity;
-  for(const c of cands){
-    const d=angDiff(c.yaw,yaw)+angDiff(c.tilt,tilt);
-    if(d<bestDist){ bestDist=d; best=c; }
-  }
-  yaw=best.yaw; tilt=best.tilt;
+  const a=Math.atan2(pt.y,pt.x), phi=Math.hypot(pt.x,pt.y)/Rs, sp=Math.sin(phi);
+  // v13: swing that point round to face the viewer — the shortest turn there, by construction
+  camSet(camMul(rotBetween(camApply([sp*Math.cos(a), sp*Math.sin(a), Math.cos(phi)]), [0,0,1]), camGet()));
   zoom=clamp(zoom*DBLCLICK_ZOOM, 0.4, 1120);
 });
 
