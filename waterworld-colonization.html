@@ -116,6 +116,12 @@
         <polygon points="6 3 20 12 6 21 6 3"/>
       </svg>
     </button>
+    <button id="btnSettle" class="icon-btn" title="Settle" aria-label="Redraw the map from its settled vertex graph">
+      <svg class="ico-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+           stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">
+        <polygon points="12 2 21 8 21 16 12 22 3 16 3 8 12 2"/>
+      </svg>
+    </button>
     <button id="btnClose" class="icon-btn" title="Close map" aria-label="Promote every small face and complete the map; the ocean stays open">
       <svg class="ico-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
            stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">
@@ -886,20 +892,129 @@ function pointInPoly(pt, poly){
   return inside;
 }
 /* invert projTo's camera math: screen click -> unit sphere point -> planar (r,angle) */
-function unprojectClick(clientX, clientY){
+function unprojectVec(clientX, clientY){
   const X=(clientX-W/2)/scale/Rs, Yp=(clientY-H/2)/scale/Rs, rr=X*X+Yp*Yp;
   if(rr>1) return null;                                   // outside the globe's silhouette
   const Zp=Math.sqrt(1-rr);
-  const ux=m0*X+m3*Yp+m6*Zp, uy=m1*X+m4*Yp+m7*Zp, uz=m2*X+m5*Yp+m8*Zp;   // camᵀ: a rotation's inverse
-  const phi=Math.acos(clamp(uz,-1,1)), theta=Math.atan2(uy,ux), r=phi*Rs;
+  return [m0*X+m3*Yp+m6*Zp, m1*X+m4*Yp+m7*Zp, m2*X+m5*Yp+m8*Zp];   // camᵀ: a rotation's inverse
+}
+function unprojectClick(clientX, clientY){
+  const u=unprojectVec(clientX, clientY);
+  if(!u) return null;
+  const phi=Math.acos(clamp(u[2],-1,1)), theta=Math.atan2(u[1],u[0]), r=phi*Rs;
   return {x:r*Math.cos(theta), y:r*Math.sin(theta)};
 }
 function faceAt(clientX, clientY){
+  if(relaxed) return relaxedFaceAt(clientX, clientY);
   const pt=unprojectClick(clientX,clientY);
   if(!pt) return null;
   for(const f of faces){                        // v11: coastal faces are filled too, so they're clickable as well
     const poly = f.sealed ? f.poly : f.livePoly;
     if(poly && faceFill(f) && pointInPoly(pt,poly)) return f;
+  }
+  return null;
+}
+
+/* ============================================================
+   v14: SETTLE — the same map, drawn from its vertices instead of its history.
+
+   Every border this construction draws is either exactly radial or exactly circular: the shell
+   border is a ray out, an arc, a ray back. That is what makes the moves easy to reason about, and
+   it is also why the finished map reads as a sunburst — a radial treemap rather than a chart of
+   regions. The grid is in the DRAWING, though, not in the map: what the construction actually
+   produces is a graph, and `f.vertices` (v10) already records it exactly — 1 vertex where three
+   regions meet, every face's boundary in cyclic order, V−E+F = 2 on the nose, every vertex of
+   degree 3. A trivalent spherical map is precisely the kind of object that has a natural shape of
+   its own, and nothing says it has to be worn in the coordinates the construction happened to
+   assign while growing.
+
+   So: lift every vertex onto the unit sphere, forget the polylines, and let the graph settle —
+   each vertex drifts towards the mean of its three neighbours, renormalised back onto the sphere,
+   with the borders redrawn as geodesics between the settled vertices. Plain Laplacian smoothing
+   does this but also shrinks the whole continent towards a point (a third of its area in 80
+   passes), so the pass is Taubin's: a shrinking step of +LAMBDA followed by an inflating step of
+   MU, slightly larger and opposite, which cancels the shrinkage while keeping the smoothing.
+
+   Nothing here can affect the construction. It reads `faces`, `f.vertices` and the `coast` ring
+   and writes only into its own position map; no move, no rule, no split point and no counter is
+   touched, and Σ(6−n)Fn − C = 6 is the same identity before and after. Growing again simply
+   drops the settled positions and rebuilds them on demand.
+   ============================================================ */
+let relaxed=false;                 // is the settled view on?
+let relaxPos=null;                 // vertex object -> its unit vector, once settled
+let relaxNbr=null;                 // vertex object -> Set of graph neighbours
+const RELAX_PAIRS=40, LAMBDA=0.55, MU=-0.58;   // Taubin: shrink by LAMBDA, inflate back by MU
+function relaxCycles(){            // every face's boundary, the ocean's ring included
+  return faces.map(f=>f.vertices).concat([coast.map(e=>e.a)]);
+}
+function buildRelax(){
+  relaxNbr=new Map();
+  const add=(a,b)=>{
+    if(a===b) return;              // the seed's self-closing loop, before firstMove() cuts it
+    let sa=relaxNbr.get(a); if(!sa) relaxNbr.set(a, sa=new Set()); sa.add(b);
+    let sb=relaxNbr.get(b); if(!sb) relaxNbr.set(b, sb=new Set()); sb.add(a);
+  };
+  for(const cyc of relaxCycles()){
+    const n=cyc.length;
+    for(let i=0;i<n;i++) add(cyc[i], cyc[(i+1)%n]);
+  }
+  relaxPos=new Map();
+  const u=[0,0,0];
+  for(const v of relaxNbr.keys()){ toUnitVec3(v,u); relaxPos.set(v,[u[0],u[1],u[2]]); }
+  for(let i=0;i<RELAX_PAIRS;i++){ relaxStep(LAMBDA); relaxStep(MU); }
+}
+function relaxStep(f){
+  const next=new Map();
+  for(const [v,ns] of relaxNbr){
+    const p=relaxPos.get(v);
+    let x=0,y=0,z=0;
+    for(const w of ns){ const q=relaxPos.get(w); x+=q[0]; y+=q[1]; z+=q[2]; }
+    const k=ns.size;
+    const nx=p[0]+f*(x/k-p[0]), ny=p[1]+f*(y/k-p[1]), nz=p[2]+f*(z/k-p[2]);
+    const L=Math.hypot(nx,ny,nz)||1;
+    next.set(v,[nx/L, ny/L, nz/L]);
+  }
+  relaxPos=next;
+}
+function dropRelax(){ relaxed=false; relaxPos=null; relaxNbr=null; setSettleIcon(); }
+
+/* a settled cell, as the screen polygon of its geodesic boundary */
+const RELAX_ARC_SEG=6;             // samples per border, so a geodesic reads as a curve
+function relaxScreen(u, out){
+  out.x=(m0*u[0]+m1*u[1]+m2*u[2])*Rs;
+  out.y=(m3*u[0]+m4*u[1]+m5*u[2])*Rs;
+  out.v=(m6*u[0]+m7*u[1]+m8*u[2])>=0;
+}
+function relaxOutline(cyc){        // the cycle's boundary as unit vectors, geodesics sampled
+  const P=[], n=cyc.length;
+  for(let i=0;i<n;i++){
+    const a=relaxPos.get(cyc[i]), b=relaxPos.get(cyc[(i+1)%n]);
+    if(!a||!b) return null;
+    if(!i) P.push(a);
+    for(let s=1;s<=RELAX_ARC_SEG;s++){ const t=[0,0,0]; slerp3(a,b,s/RELAX_ARC_SEG,t); P.push(t); }
+  }
+  return P;
+}
+/* gnomonic point-in-cell: seen from the clicked direction, a small spherical polygon flattens
+   onto the tangent plane there and the ordinary crossing test applies, with the click at 0,0 */
+function relaxedFaceAt(clientX, clientY){
+  const u=unprojectVec(clientX, clientY);
+  if(!u) return null;
+  const ax=Math.abs(u[0])<0.9 ? [1,0,0] : [0,1,0];
+  const e1=[ax[1]*u[2]-ax[2]*u[1], ax[2]*u[0]-ax[0]*u[2], ax[0]*u[1]-ax[1]*u[0]];
+  const l1=Math.hypot(...e1); e1[0]/=l1; e1[1]/=l1; e1[2]/=l1;
+  const e2=[u[1]*e1[2]-u[2]*e1[1], u[2]*e1[0]-u[0]*e1[2], u[0]*e1[1]-u[1]*e1[0]];
+  for(const f of faces){
+    if(!faceFill(f)) continue;
+    const flat=[]; let ok=true;
+    for(const v of f.vertices){
+      const q=relaxPos.get(v);
+      if(!q){ ok=false; break; }
+      const d=q[0]*u[0]+q[1]*u[1]+q[2]*u[2];
+      if(d<=0.02){ ok=false; break; }              // over the horizon from here: not this cell
+      flat.push({x:(q[0]*e1[0]+q[1]*e1[1]+q[2]*e1[2])/d, y:(q[0]*e2[0]+q[1]*e2[1]+q[2]*e2[2])/d});
+    }
+    if(ok && flat.length>2 && pointInPoly({x:0,y:0}, flat)) return f;
   }
   return null;
 }
@@ -942,6 +1057,8 @@ function draw(){
   ctx.strokeStyle='rgba(40,95,140,.16)'; ctx.lineWidth=1/scale; ctx.stroke(GF);
   ctx.strokeStyle='rgba(50,105,150,.38)'; ctx.lineWidth=1.6/scale;
   ctx.beginPath(); ctx.arc(0,0,Rs,0,7); ctx.stroke();
+
+  if(relaxed){ drawSettled(); return; }          // v14: the same map, drawn from its settled graph
 
   // v9/v11: every face that has reached a category is filled underneath the border strokes — a
   // sealed one from its cached polygon, a coastal one re-chained each frame from its interior
@@ -1010,6 +1127,39 @@ function draw(){
   ctx.strokeStyle='rgba(12,52,92,.92)';   ctx.lineWidth=1.9/scale; ctx.stroke(CF);
 }
 
+/* v14: the settled view. Same faces, same fills, same near/far rules as above — only the outline
+   of each cell comes from the relaxed vertex graph rather than from the drawn polylines. The ocean
+   needs no pass of its own: it is already washed over the whole globe above, and the coastline is
+   just the seaward edge of the coastal cells, which they stroke themselves. */
+function drawSettled(){
+  const near=[], far=[];
+  for(const f of faces){
+    const cyc=f.vertices, fill=faceFill(f);
+    if(!fill || cyc.length<3) continue;
+    const P=relaxOutline(cyc);
+    if(!P) continue;
+    const scr=[]; let visible=0;
+    for(const u of P){ const o={}; relaxScreen(u,o); if(o.v) visible++; scr.push(o); }
+    if(visible && visible!==scr.length) for(const o of scr) if(!o.v){
+      const d=Math.hypot(o.x,o.y)||1; o.x*=Rs/d; o.y*=Rs/d;   // cut the fill along the horizon
+    }
+    const path=new Path2D();
+    path.moveTo(scr[0].x, scr[0].y);
+    for(let i=1;i<scr.length;i++) path.lineTo(scr[i].x, scr[i].y);
+    path.closePath();
+    (visible ? near : far).push({path, fill});
+  }
+  ctx.save(); ctx.globalAlpha=FAR_SIDE_WASH;
+  for(const {path,fill} of far){ ctx.fillStyle=fill; ctx.fill(path); }
+  ctx.restore();
+  for(const {path,fill} of near){ ctx.fillStyle=fill; ctx.fill(path); }
+  ctx.lineJoin='round'; ctx.lineCap='round';
+  ctx.strokeStyle='rgba(25,70,110,.15)'; ctx.lineWidth=1/scale;
+  for(const {path} of far) ctx.stroke(path);
+  ctx.strokeStyle='rgba(12,52,92,.72)'; ctx.lineWidth=1.3/scale;
+  for(const {path} of near) ctx.stroke(path);
+}
+
 /* ---------- v10: export every face's vertex list ----------
    Faces are numbered in `faces` array order, which is creation order — face 0 is the seed at the
    center, and every later face was carved out of the coast at some greater radius, so that order
@@ -1057,6 +1207,7 @@ function setRunIcon(state){        // state: 'play' | 'pause' | 'done'
 }
 const btnReset=document.getElementById('btnReset');
 const btnClose=document.getElementById('btnClose');
+const btnSettle=document.getElementById('btnSettle');
 const btnExport=document.getElementById('btnExport');
 const speedEl=document.getElementById('speed');
 const fullToast=document.getElementById('fullToast');
@@ -1080,12 +1231,26 @@ btnRun.onclick=()=>{
   if(full) return;
   running=!running;
   setRunIcon(running?'pause':'play');
-  if(running){ clearTimeout(closeToastTimer); closeToast.classList.remove('show'); }   // resuming growth makes the "closed" state stale
+  if(running){ clearTimeout(closeToastTimer); closeToast.classList.remove('show');   // resuming growth makes the "closed" state stale
+               dropRelax(); }                  // v14: and it makes the settled positions stale too
 };
-btnReset.onclick=()=>{ reset(); updateStats(); };
+btnReset.onclick=()=>{ dropRelax(); reset(); updateStats(); };
+/* v14: settling reads the map, so it needs one that exists (firstMove has run) and it holds the
+   growth still — one more move and every settled position would be a move out of date. */
+function setSettleIcon(){
+  btnSettle.classList.toggle('primary', relaxed);
+  btnSettle.title = relaxed ? 'Show the construction' : 'Settle';
+}
+btnSettle.onclick=()=>{
+  if(relaxed){ dropRelax(); return; }
+  if(moves===0) return;
+  running=false; setRunIcon(full?'done':'play'); btnRun.classList.remove('primary');
+  buildRelax(); relaxed=true; setSettleIcon();
+};
 document.getElementById('closeToastX').onclick=()=>{ clearTimeout(closeToastTimer); closeToast.classList.remove('show'); };
 btnClose.onclick=()=>{
   if(closing || moves===0) return;
+  dropRelax();                         // v14: closing keeps growing, so the settled view goes stale
   closeDone=false;                     // allow re-closing later if growth reintroduces small faces
   closing=true; running=true; btnRun.disabled=false; setRunIcon('pause');
   fullToast.classList.remove('show');
