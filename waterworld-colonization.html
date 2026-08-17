@@ -27,6 +27,7 @@
              font-size:26px;letter-spacing:.01em;color:var(--foam);margin-bottom:10px}
   .row{display:flex;justify-content:space-between;gap:14px;font-size:12.5px;padding:3px 0;color:var(--foam)}
   .row .k{color:var(--foam-dim);white-space:nowrap}
+  .row.hidden{display:none}   /* a diagnostic row only earns its line once it has something to say */
   .inv{margin-top:10px;padding-top:9px;border-top:1px solid var(--hairline);font-size:12px}
   .inv b{font-weight:400}
   .inv .ok{color:var(--ok)} .inv .bad{color:var(--bad)} .inv .warn{color:var(--warn)}
@@ -109,18 +110,17 @@
 
 <div class="panel ledger">
   <h2>Ship's log</h2>
-  <div class="row"><span class="k">Faces (land)</span><span id="sF">3</span></div>
-  <div class="row"><span class="k">Ocean</span><span id="sO">1</span></div>
+  <div class="row"><span class="k">Faces + Ocean</span><span id="sF">2</span></div>
   <div class="row"><span class="k">Coast C</span><span id="sC">2</span></div>
   <div class="row"><span class="k">Pentagons F5</span><span id="s5">0</span></div>
   <div class="row"><span class="k">Hexagons F6</span><span id="s6">0</span></div>
   <div class="row"><span class="k">Wells n&gt;6</span><span id="sW">0</span></div>
-  <div class="row"><span class="k">Moves</span><span id="sM">0</span></div>
-  <div class="row"><span class="k">Fallback F3</span><span id="sFB">0</span></div>
+  <div class="row hidden" id="rowFB"><span class="k">Fallback F3</span><span id="sFB">0</span></div>
   <div class="inv"><b>Σ(6−n)F<sub>n</sub> − C = <span id="sInv" class="ok">6 ✓</span></b></div>
 </div>
 
-<div class="panel full-toast" id="fullToast">The island now fills the globe — press Restart to grow a new one.</div>
+<div class="panel full-toast" id="fullToast">The island now fills the globe — press Restart to grow a new one.
+  <button class="toast-x" id="fullToastX" aria-label="Dismiss message">×</button></div>
 <div class="panel full-toast" id="closeToast" style="bottom:118px">Now every face (included the ocean), coastal or landlocked, has at least five sides.
   <button class="toast-x" id="closeToastX" aria-label="Dismiss message">×</button></div>
 
@@ -428,6 +428,7 @@ let inkLines;                      // every border ever drawn, as planar polylin
 let fallbackCount;                 // how many times attemptMove() hit the F3 fallback
 let closing, closeDone;            // v6: "Close map" endgame state
 let closeToastTimer=null;          // auto-dismiss handle for the "map closed" message
+let fullToastTimer=null, fullToastSeen=false;   // v16: the "globe is full" notice fades too, once per full state
 let moveLog=[], logIdx=-1;        // v15: one snapshot per state, logIdx = where we currently stand
 /* v11: a face's fill is read from its side count, not stamped once at seal time — F5, F6 and the
    n>6 wells each own a hue, shown bright while the face still touches the ocean and darkened the
@@ -468,7 +469,7 @@ function reset(){
                                     // firstMove() is what fixes that
   running=false;
   btnRun.disabled=false; setRunIcon('play'); btnRun.classList.remove('primary');
-  fullToast.classList.remove('show');
+  fullToastSeen=false; hideFullToast();
   btnClose.disabled=false; btnClose.title='Close map';
   clearTimeout(closeToastTimer);
   closeToast.classList.remove('show');
@@ -793,6 +794,19 @@ function showCloseToast(){
   clearTimeout(closeToastTimer);
   closeToastTimer=setTimeout(()=>closeToast.classList.remove('show'), 4000);
 }
+/* v16: syncControls() reconciles the notice from the state on every frame, so "show once then fade"
+   needs a memory of its own — fullToastSeen — that only a step back out of the full state clears. */
+function showFullToast(){
+  if(fullToastSeen) return;
+  fullToastSeen=true;
+  fullToast.classList.add('show');
+  clearTimeout(fullToastTimer);
+  fullToastTimer=setTimeout(hideFullToast, 5000);
+}
+function hideFullToast(){
+  clearTimeout(fullToastTimer);
+  fullToast.classList.remove('show');
+}
 function finishClose(){          /* nothing is buried: the ocean and its coast faces stay open forever */
   closing=false; closeDone=true; running=false;
   btnRun.disabled=false; setRunIcon('play'); btnRun.classList.remove('primary');
@@ -838,7 +852,7 @@ function setFull(){
   full=true; running=false;
   btnRun.disabled=true; setRunIcon('done');
   btnRun.classList.remove('primary');
-  fullToast.classList.add('show');
+  showFullToast();
 }
 
 /* ---------- v15: stepping back and forward through the growth ----------
@@ -1265,7 +1279,7 @@ function syncControls(){
   const done = full && !closing;
   btnRun.disabled=done;
   setRunIcon(done ? 'done' : running ? 'pause' : 'play');
-  fullToast.classList.toggle('show', done);
+  if(done) showFullToast(); else { fullToastSeen=false; hideFullToast(); }
   btnPrev.disabled = logIdx<=0;
   btnNext.disabled = !canStepForward();
 }
@@ -1283,12 +1297,13 @@ addEventListener('keydown', e=>{
   else if(e.key==='ArrowRight'){ e.preventDefault(); manualStep(false); }
 });
 document.getElementById('closeToastX').onclick=()=>{ clearTimeout(closeToastTimer); closeToast.classList.remove('show'); };
+document.getElementById('fullToastX').onclick=hideFullToast;   // dismissing it early doesn't re-arm it
 btnClose.onclick=()=>{
   if(closing || moves===0) return;
   dropFuture();                        // v15: closing replaces whatever growth was recorded ahead
   closeDone=false;                     // allow re-closing later if growth reintroduces small faces
   closing=true; running=true; btnRun.disabled=false; setRunIcon('pause');
-  fullToast.classList.remove('show');
+  fullToastSeen=false; hideFullToast();
   clearTimeout(closeToastTimer);
   closeToast.classList.remove('show');
   btnClose.disabled=true; btnClose.title='Closing…';
@@ -1357,14 +1372,13 @@ reset();
 let last=performance.now(), acc=0, statT=0;
 function updateStats(){
   let f5=0,f6=0,w=0; for(const f of faces){ if(f.n===5)f5++; else if(f.n===6)f6++; else if(f.n>6)w++; }
-  document.getElementById('sF').textContent=faces.length;
-  document.getElementById('sO').textContent=1;   // the ocean is a face of the map and is never buried
+  document.getElementById('sF').textContent=faces.length+1;   // +1: the ocean is a face of the map too, and is never buried
   document.getElementById('sC').textContent=coast.length;
   document.getElementById('s5').textContent=f5;
   document.getElementById('s6').textContent=f6;
   document.getElementById('sW').textContent=w;
-  document.getElementById('sM').textContent=moves;
   document.getElementById('sFB').textContent=fallbackCount;
+  document.getElementById('rowFB').classList.toggle('hidden', fallbackCount===0);
   const el=document.getElementById('sInv');
   if(moves===0){ el.textContent='— only 1 land face'; el.className='warn'; }
   else{ el.textContent=invOK?'6 ✓':(sumLand-coast.length)+' ✗'; el.className=invOK?'ok':'bad'; }
