@@ -808,7 +808,7 @@ function addLines(lists, F, B){
    true sphere-hugging curve rather than a flat chord. */
 const DENSIFY_PX = 6, DENSIFY_MAX = 256;
 const EMPH_FROM = 8, EMPH_TO = 90;   // v14: the zoom range over which the tiles pull apart
-const TILE_GAP = 5;                  // width of the seam between two tiles, in screen pixels
+const TILE_GAP = 3;                  // width of the seam between two tiles, in screen pixels
 function toUnitVec3(p, out){
   const r=Math.hypot(p.x,p.y), a=Math.atan2(p.y,p.x);
   const phi=Math.min(3.12, r/Rs), sp=Math.sin(phi);
@@ -1011,7 +1011,9 @@ function draw(){
   const emph=clamp(Math.log(zoom/EMPH_FROM)/Math.log(EMPH_TO/EMPH_FROM), 0, 1);
   ctx.lineJoin='round'; ctx.lineCap='round';
   if(emph>0){
-    ctx.strokeStyle='rgba(8,24,44,'+(0.90*emph).toFixed(3)+')';
+    // pale and thin: an inland wall is a crease between two regions, and it has to stay clearly
+    // the lesser mark next to the black coastline below — that is the one edge where the map ends
+    ctx.strokeStyle='rgba(222,242,248,'+(0.80*emph).toFixed(3)+')';
     ctx.lineWidth=TILE_GAP*emph/scale;
     for(const {path} of nearFaces) ctx.stroke(path);
   }
@@ -1026,13 +1028,17 @@ function draw(){
   ctx.strokeStyle='rgba(215,238,244,'+(0.45*(1-emph)).toFixed(3)+')';
   ctx.lineWidth=1.1/scale; ctx.stroke(IF);
 
-  // the inked coastline — a dark line with a soft wash, the pale-sea counterpart of the old glow
+  // The inked coastline — black, over a soft wash, the pale-sea counterpart of the old glow. It is
+  // drawn last so it wins wherever a tile seam ran along the same wall, and it is the only line on
+  // the map that is truly black: every inland border is a crease inside the land, the coast is
+  // where the land stops. Zoomed in, where the seams put on weight, it gains more than they do so
+  // the difference in rank only becomes plainer.
   const coastLines=coast.map(ptsOf).map(densify);
   const CF=new Path2D(), CB=new Path2D();
   addLines(coastLines, CF, CB);
-  ctx.strokeStyle='rgba(20,65,110,.26)'; ctx.lineWidth=2/scale;   ctx.stroke(CB);
-  ctx.strokeStyle='rgba(40,110,165,.18)'; ctx.lineWidth=6/scale;  ctx.stroke(CF);
-  ctx.strokeStyle='rgba(12,52,92,.92)';   ctx.lineWidth=1.9/scale; ctx.stroke(CF);
+  ctx.strokeStyle='rgba(20,65,110,.26)'; ctx.lineWidth=2/scale;              ctx.stroke(CB);
+  ctx.strokeStyle='rgba(40,110,165,.18)'; ctx.lineWidth=(6+9*emph)/scale;    ctx.stroke(CF);
+  ctx.strokeStyle='rgba(0,0,0,.95)';      ctx.lineWidth=(1.9+3.4*emph)/scale; ctx.stroke(CF);
 }
 
 /* ---------- v10: export every face's vertex list ----------
