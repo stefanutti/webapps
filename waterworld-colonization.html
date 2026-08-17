@@ -69,15 +69,31 @@
     .ledger h2{font-size:16px;margin-bottom:6px}
     .row{font-size:10.5px;padding:2px 0;gap:10px}
     .inv{font-size:9.5px;margin-top:6px;padding-top:6px}
-    .controls{left:10px;right:10px;bottom:10px;max-width:calc(100vw - 20px);
-              justify-content:center;gap:4px 0;padding:6px}
-    .ctrl-group{padding:0 7px;gap:6px}
-    button{padding:6px 10px;font-size:11px}
-    .icon-btn{padding:7px}
-    input[type=range]{width:64px}
+    /* v16: the toolbar has to come out as ONE row on a phone — with two more buttons in it since the
+       step controls arrived, the old paddings pushed Export and Restart onto a second line. Everything
+       fixed-size is tightened a little, and the pace slider is made the elastic one: its flex-basis is
+       the narrow 40px the row is laid out against, so it never causes a wrap, and it then grows into
+       whatever room the wider phones leave over. */
+    .controls{left:8px;right:8px;bottom:10px;max-width:calc(100vw - 16px);
+              justify-content:center;gap:4px 0;padding:5px}
+    .ctrl-group{padding:0 4px;gap:5px}
+    .ctrl-group.pace{flex:1 1 auto;min-width:0}
+    button{padding:6px 9px;font-size:11px}
+    .icon-btn{padding:5px}
+    input[type=range]{width:40px;flex:1 1 40px;max-width:100px}
+    input[type=color]{width:22px;height:20px}
+    .ctrl-group.swatches{gap:4px}
     #fullToast{bottom:150px}
     #closeToast{bottom:190px!important}
     .full-toast{left:10px;right:10px;text-align:center;font-size:11px}
+  }
+  /* the narrowest phones still going (360 is the common floor, 320 the oldest): one more turn of the
+     screw so the row holds there too, rather than dropping Export and Restart onto a line of their own */
+  @media (max-width:352px){
+    .controls{left:6px;right:6px;max-width:calc(100vw - 12px);padding:4px}
+    .ctrl-group{padding:0 2px;gap:4px}
+    .icon-btn{padding:4px}
+    input[type=color]{width:20px}
   }
 </style>
 </head>
@@ -136,7 +152,7 @@
       </svg>
     </button>
   </div>
-  <div class="ctrl-group">
+  <div class="ctrl-group pace">
     <input id="speed" type="range" min="1" max="40" value="7" step="1" title="Pace" aria-label="Moves per second">
   </div>
   <div class="ctrl-group swatches">
