@@ -110,10 +110,22 @@
 
 <div class="panel controls">
   <div class="ctrl-group">
+    <button id="btnPrev" class="icon-btn" title="Previous move" aria-label="Step back one move">
+      <svg class="ico-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+           stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">
+        <polyline points="15 18 9 12 15 6"/>
+      </svg>
+    </button>
     <button id="btnRun" class="icon-btn" title="Start" aria-label="Start or stop the growth">
       <svg class="ico-svg" id="btnRunIcon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
            stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">
         <polygon points="6 3 20 12 6 21 6 3"/>
+      </svg>
+    </button>
+    <button id="btnNext" class="icon-btn" title="Next move" aria-label="Advance one move">
+      <svg class="ico-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+           stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">
+        <polyline points="9 18 15 12 9 6"/>
       </svg>
     </button>
     <button id="btnClose" class="icon-btn" title="Close map" aria-label="Promote every small face and complete the map; the ocean stays open">
@@ -400,6 +412,7 @@ let inkLines;                      // every border ever drawn, as planar polylin
 let fallbackCount;                 // how many times attemptMove() hit the F3 fallback
 let closing, closeDone;            // v6: "Close map" endgame state
 let closeToastTimer=null;          // auto-dismiss handle for the "map closed" message
+let moveLog=[], logIdx=-1;        // v15: one snapshot per state, logIdx = where we currently stand
 /* v11: a face's fill is read from its side count, not stamped once at seal time — F5, F6 and the
    n>6 wells each own a hue, shown bright while the face still touches the ocean and darkened the
    moment it seals. A face still under five sides has not reached one of those categories yet and
@@ -443,6 +456,8 @@ function reset(){
   btnClose.disabled=false; btnClose.title='Close map';
   clearTimeout(closeToastTimer);
   closeToast.classList.remove('show');
+  resetLog();                  // v15: the seed is the one state you can never step back past
+  syncControls();
 }
 
 function firstMove(){              // the seed's one special move: cuts the bare loop into a theta graph
@@ -773,6 +788,74 @@ function setFull(){
   fullToast.classList.add('show');
 }
 
+/* ---------- v15: stepping back and forward through the growth ----------
+   A move is not reversible in itself — it splits edges into fresh point objects, rebuilds `coast`,
+   pushes a new face and mutates the faces around it — so going back means restoring the state as it
+   stood before. What makes that cheap is that almost nothing the construction produces is ever
+   mutated after creation: points, arcs, edge descriptors ({a,pts,b}) and the inkLines polylines are
+   written once and only ever read afterwards. Only the CONTAINERS (`coast`, `faces`, `inkLines`) and
+   a handful of per-face fields change, so a snapshot is a shallow copy of those containers plus one
+   small record per face — the shared geometry underneath is never copied, and restoring is exactly
+   as cheap as taking the snapshot.
+
+   moveLog[i] is the state after i recorded steps; logIdx says which one we are standing in. Going
+   forward at the tip runs a real move and appends its snapshot; going forward anywhere else simply
+   restores the snapshot already recorded ahead, so backtracking and moving on again retraces the
+   very same moves rather than drawing new random ones — which is also what Start does after a step
+   back: it replays the recorded future first, then keeps growing from the tip.
+
+   f.color is deliberately left out of the records: a region the user recolored by hand keeps that
+   color through any amount of stepping, since the choice belongs to the viewer, not to the move. */
+const LOG_MAX = 240;           // how many moves back one can step; oldest states are dropped
+
+/* Every field a move can touch is here, so a record differing in none of them is a face untouched
+   since the previous snapshot and can be shared with it instead of copied again — which keeps a
+   snapshot O(faces) cheap comparisons plus copies for the two or three faces the move really hit. */
+function faceRec(f, prev){
+  if(prev && prev.f===f && prev.n===f.n && prev.coastCount===f.coastCount && prev.sealed===f.sealed
+     && prev.poly===f.poly && prev.interior.length===f.interior.length
+     && prev.vertices.length===f.vertices.length) return prev;
+  return {f, n:f.n, coastCount:f.coastCount, sealed:f.sealed, poly:f.poly,
+          interior:f.interior.slice(), vertices:f.vertices.slice()};
+}
+function snapshot(){
+  const prev=moveLog[logIdx];
+  return {
+    recs: faces.map((f,i)=>faceRec(f, prev && prev.recs[i])),
+    faces: faces.slice(), coast: coast.slice(), ink: inkLines.slice(),
+    sumLand, moves, maxR, invOK, full, closing, closeDone, fallbackCount
+  };
+}
+function restore(s){
+  faces=s.faces.slice(); coast=s.coast.slice(); inkLines=s.ink.slice();
+  for(const r of s.recs){                        // records are shared between snapshots: copy out
+    const f=r.f;
+    f.n=r.n; f.coastCount=r.coastCount; f.sealed=r.sealed; f.poly=r.poly;
+    f.interior=r.interior.slice(); f.vertices=r.vertices.slice();
+  }
+  sumLand=s.sumLand; moves=s.moves; maxR=s.maxR; invOK=s.invOK;
+  full=s.full; closing=s.closing; closeDone=s.closeDone; fallbackCount=s.fallbackCount;
+}
+function resetLog(){ moveLog=[]; logIdx=-1; moveLog.push(snapshot()); logIdx=0; }
+function dropFuture(){ moveLog.length=logIdx+1; }   // for actions that must not replay the old one
+function canStepForward(){ return logIdx<moveLog.length-1 || closing || !full; }
+function stepForward(){
+  if(logIdx<moveLog.length-1){ restore(moveLog[++logIdx]); return true; }   // retrace, don't redraw
+  if(!(closing || !full)) return false;
+  const m=moves, d=closeDone;
+  closing ? closeStep() : attemptMove();
+  if(moves===m && closeDone===d) return false;   // the move failed or the globe just filled up
+  dropFuture(); moveLog.push(snapshot());
+  if(moveLog.length>LOG_MAX) moveLog.shift();
+  logIdx=moveLog.length-1;
+  return true;
+}
+function stepBack(){
+  if(logIdx<=0) return false;
+  restore(moveLog[--logIdx]);
+  return true;
+}
+
 /* ---------- projection onto the fixed sphere ---------- */
 function projTo(p, out){
   if(p._r===undefined){ p._r=Math.hypot(p.x,p.y);
@@ -1082,12 +1165,17 @@ const RUN_ICONS={                  // swapped into btnRunIcon to reflect state, 
   pause:'<rect x="6" y="4" width="4" height="16" rx="1"/><rect x="14" y="4" width="4" height="16" rx="1"/>',
   done:'<polyline points="20 6 9 17 4 12"/>'
 };
+let runIconState=null;
 function setRunIcon(state){        // state: 'play' | 'pause' | 'done'
+  if(state===runIconState) return; // v15: syncControls re-asserts this every stats tick — don't churn the DOM
+  runIconState=state;
   btnRunIcon.innerHTML=RUN_ICONS[state];
   btnRun.title=state==='play'?'Start':state==='pause'?'Stop':'Full';
 }
 const btnReset=document.getElementById('btnReset');
 const btnClose=document.getElementById('btnClose');
+const btnPrev=document.getElementById('btnPrev');
+const btnNext=document.getElementById('btnNext');
 const btnExport=document.getElementById('btnExport');
 const speedEl=document.getElementById('speed');
 const fullToast=document.getElementById('fullToast');
@@ -1108,15 +1196,43 @@ function openColorPicker(f){
 if(matchMedia('(prefers-reduced-motion: reduce)').matches){
   running=false; speedEl.value=3; }
 btnRun.onclick=()=>{
-  if(full) return;
+  if(full && !closing) return;
   running=!running;
   setRunIcon(running?'pause':'play');
   if(running){ clearTimeout(closeToastTimer); closeToast.classList.remove('show'); }   // resuming growth makes the "closed" state stale
 };
 btnReset.onclick=()=>{ reset(); updateStats(); };
+
+/* v15: stepping is a manual gear — it takes over from the automatic growth rather than fighting it,
+   so either button stops the run first. The buttons' own enabled/disabled state, and every control
+   whose meaning depends on where in the move log we stand (Start is dead on a filled globe, the
+   "globe is full" notice belongs to the states that are actually full), is reconciled in one place,
+   from the state itself, so a step back out of a full or closed map puts the toolbar back too. */
+function syncControls(){
+  const done = full && !closing;
+  btnRun.disabled=done;
+  setRunIcon(done ? 'done' : running ? 'pause' : 'play');
+  fullToast.classList.toggle('show', done);
+  btnPrev.disabled = logIdx<=0;
+  btnNext.disabled = !canStepForward();
+}
+function manualStep(back){
+  running=false;
+  if(back ? stepBack() : stepForward()){ updateStats(); }
+  syncControls();
+}
+btnPrev.onclick=()=>manualStep(true);
+btnNext.onclick=()=>manualStep(false);
+addEventListener('keydown', e=>{
+  if(e.metaKey||e.ctrlKey||e.altKey) return;
+  if(e.target instanceof HTMLInputElement) return;   // the pace slider owns the arrows while focused
+  if(e.key==='ArrowLeft'){ e.preventDefault(); manualStep(true); }
+  else if(e.key==='ArrowRight'){ e.preventDefault(); manualStep(false); }
+});
 document.getElementById('closeToastX').onclick=()=>{ clearTimeout(closeToastTimer); closeToast.classList.remove('show'); };
 btnClose.onclick=()=>{
   if(closing || moves===0) return;
+  dropFuture();                        // v15: closing replaces whatever growth was recorded ahead
   closeDone=false;                     // allow re-closing later if growth reintroduces small faces
   closing=true; running=true; btnRun.disabled=false; setRunIcon('pause');
   fullToast.classList.remove('show');
@@ -1199,21 +1315,22 @@ function updateStats(){
   const el=document.getElementById('sInv');
   if(moves===0){ el.textContent='— only 1 land face'; el.className='warn'; }
   else{ el.textContent=invOK?'6 ✓':(sumLand-coast.length)+' ✗'; el.className=invOK?'ok':'bad'; }
+  syncControls();
 }
 const FRAME_BUDGET_MS = 14;   // max pace: no acc/dt throttling, just spend the frame stepping
 function frame(now){
   const dt=Math.min(.1,(now-last)/1000); last=now;
-  if(running && (closing || !full)){
+  // v15: the automatic run advances through the same stepForward() the > button uses, so a run
+  // started after a step back replays the recorded moves before growing new ones
+  if(running && canStepForward()){
     if(+speedEl.value >= +speedEl.max){
       const deadline=performance.now()+FRAME_BUDGET_MS;
-      while((closing || !full) && performance.now()<deadline){
-        closing ? closeStep() : attemptMove();
-      }
+      while(performance.now()<deadline){ if(!stepForward()) break; }
       acc=0;
     } else {
       acc+=dt*(+speedEl.value);
-      let n=0; while(acc>=1 && n<12 && (closing || !full)){
-        acc-=1; closing ? closeStep() : attemptMove(); n++;
+      let n=0; while(acc>=1 && n<12){
+        acc-=1; if(!stepForward()) break; n++;
       }
     }
   }
