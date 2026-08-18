@@ -1486,25 +1486,87 @@ function ballVec(clientX, clientY){
   const d=Math.sqrt(rr);                // pointer is off the globe: hold on at the silhouette
   return [X/d, Y/d, 0];
 }
-let dragging=false, dragFrom=null, dragCam=null, downX=0, downY=0, downTime=0, moved=false;
+let dragging=false, dragPointerId=null, dragFrom=null, dragCam=null;
+let downX=0, downY=0, downTime=0, moved=false, pinchDist=null;
+const touchPointers=new Map();
+function beginDrag(e, alreadyMoved=false){
+  dragging=true; dragPointerId=e.pointerId;
+  dragFrom=ballVec(e.clientX,e.clientY); dragCam=camGet();
+  downX=e.clientX; downY=e.clientY; downTime=performance.now(); moved=alreadyMoved;
+  canvas.classList.add('grabbing');
+}
+function currentPinchDistance(){
+  const [a,b]=touchPointers.values();
+  return Math.hypot(a.x-b.x, a.y-b.y);
+}
+function finishTouchPointer(pointerId){
+  touchPointers.delete(pointerId); pinchDist=null;
+  if(touchPointers.size===1){
+    const [remainingId,p]=touchPointers.entries().next().value;
+    beginDrag({pointerId:remainingId,clientX:p.x,clientY:p.y}, true);
+  } else {
+    dragging=false; dragPointerId=null; canvas.classList.remove('grabbing');
+  }
+}
 canvas.addEventListener('pointerdown', e=>{
-  dragging=true; dragFrom=ballVec(e.clientX,e.clientY); dragCam=camGet();
-  downX=e.clientX; downY=e.clientY; downTime=performance.now(); moved=false;
-  canvas.setPointerCapture(e.pointerId); canvas.classList.add('grabbing');
+  canvas.setPointerCapture(e.pointerId);
+  if(e.pointerType==='touch'){
+    touchPointers.set(e.pointerId,{x:e.clientX,y:e.clientY});
+    if(touchPointers.size===1) beginDrag(e);
+    else{
+      dragging=false; dragPointerId=null; moved=true;
+      pinchDist=touchPointers.size===2 ? currentPinchDistance() : null;
+      canvas.classList.remove('grabbing');
+    }
+    return;
+  }
+  beginDrag(e);
 });
 canvas.addEventListener('pointermove', e=>{
-  if(!dragging) return;
+  if(e.pointerType==='touch'){
+    if(!touchPointers.has(e.pointerId)) return;
+    touchPointers.set(e.pointerId,{x:e.clientX,y:e.clientY});
+    if(touchPointers.size>=2){
+      if(touchPointers.size===2){
+        const d=currentPinchDistance();
+        if(pinchDist!==null) zoom=clamp(zoom*(d/pinchDist), 0.4, 1120);
+        pinchDist=d;
+      }
+      return;
+    }
+  }
+  if(!dragging || e.pointerId!==dragPointerId) return;
   if(!moved && Math.hypot(e.clientX-downX, e.clientY-downY)>CLICK_SLOP) moved=true;
   camSet(camMul(rotBetween(dragFrom, ballVec(e.clientX,e.clientY)), dragCam));
 });
 addEventListener('pointerup', e=>{
+  if(e.pointerType==='touch'){
+    if(!touchPointers.has(e.pointerId)) return;
+    const wasSingle=touchPointers.size===1;
+    if(wasSingle && !moved && performance.now()-downTime<CLICK_MS){
+      const f=faceAt(e.clientX, e.clientY);
+      if(f) openColorPicker(f);
+    }
+    finishTouchPointer(e.pointerId);
+    return;
+  }
+  if(e.pointerId!==dragPointerId) return;
   dragging=false; canvas.classList.remove('grabbing');
   if(!moved && performance.now()-downTime<CLICK_MS){
     const f=faceAt(e.clientX, e.clientY);
     if(f) openColorPicker(f);
   }
 });
-canvas.addEventListener('pointercancel', ()=>{ dragging=false; canvas.classList.remove('grabbing'); });
+canvas.addEventListener('pointercancel', e=>{
+  if(e.pointerType==='touch'){
+    if(!touchPointers.has(e.pointerId)) return;
+    finishTouchPointer(e.pointerId);
+    return;
+  }
+  if(e.pointerId!==dragPointerId) return;
+  dragging=false; dragPointerId=null;
+  pinchDist=null; canvas.classList.remove('grabbing');
+});
 
 canvas.addEventListener('wheel', e=>{
   e.preventDefault();
@@ -1520,16 +1582,6 @@ canvas.addEventListener('dblclick', e=>{
   camSet(camMul(rotBetween(camApply([sp*Math.cos(a), sp*Math.sin(a), Math.cos(phi)]), [0,0,1]), camGet()));
   zoom=clamp(zoom*DBLCLICK_ZOOM, 0.4, 1120);
 });
-
-let pinchDist=null;
-canvas.addEventListener('touchmove', e=>{
-  if(e.touches.length!==2) return;
-  e.preventDefault();
-  const [t0,t1]=e.touches, d=Math.hypot(t0.clientX-t1.clientX, t0.clientY-t1.clientY);
-  if(pinchDist!==null) zoom = clamp(zoom*(d/pinchDist), 0.4, 1120);
-  pinchDist=d;
-}, {passive:false});
-canvas.addEventListener('touchend', e=>{ if(e.touches.length<2) pinchDist=null; });
 
 reset();
 

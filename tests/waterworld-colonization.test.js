@@ -413,6 +413,49 @@ function frameBatchCalls(speedValue) {
   return run(speedValue);
 }
 
+function exerciseCameraPointers(events) {
+  const cameraStart = html.indexOf('let zoom = 1;');
+  const cameraEnd = html.indexOf("\n\naddEventListener('resize', resize);", cameraStart);
+  const interactionStart = html.indexOf('const CLICK_SLOP =');
+  const interactionEnd = html.indexOf('\nreset();', interactionStart);
+  assert.notEqual(cameraStart, -1, 'camera math not found');
+  assert.notEqual(cameraEnd, -1, 'camera math boundary not found');
+  assert.notEqual(interactionStart, -1, 'camera interaction handlers not found');
+  assert.notEqual(interactionEnd, -1, 'camera interaction boundary not found');
+
+  const run = new Function('events', `
+    const W = 390, H = 844, Rs = 620;
+    const scale = Math.min(W, H) * .46 / Rs;
+    ${html.slice(cameraStart, cameraEnd)}
+
+    const canvasListeners = {}, windowListeners = {};
+    const canvas = {
+      addEventListener(type, handler) { (canvasListeners[type] ||= []).push(handler); },
+      setPointerCapture() {},
+      classList: { add() {}, remove() {} },
+    };
+    function addEventListener(type, handler) { (windowListeners[type] ||= []).push(handler); }
+    const performance = { now() { return 100; } };
+    let colorPickerOpens = 0;
+    function faceAt() { return {}; }
+    function openColorPicker() { colorPickerOpens++; }
+    function unprojectClick() { return { x: 0, y: 0 }; }
+
+    ${html.slice(interactionStart, interactionEnd)}
+
+    const dispatch = event => {
+      const listeners = event.target === 'window' ? windowListeners : canvasListeners;
+      const payload = { preventDefault() {}, ...event };
+      for (const handler of listeners[event.type] || []) handler(payload);
+    };
+    const initialCamera = camGet();
+    for (const event of events) dispatch(event);
+    return { initialCamera, camera: camGet(), zoom, colorPickerOpens };
+  `);
+
+  return run(events);
+}
+
 function closeReplayBehavior() {
   const run = new Function('Math', `${historyAlgorithm()}
     const btnRun = { disabled: false, classList: { remove() {} } };
@@ -667,6 +710,118 @@ test('statistics popup toggles, refreshes, closes outside, and returns focus on 
 
 test('a frame stops batching as soon as closing stops the run', () => {
   assert.deepEqual([frameBatchCalls(40), frameBatchCalls(39)], [1, 1]);
+});
+
+test('two touch pointers pinch without rotating the globe', () => {
+  const result = exerciseCameraPointers([
+    { target: 'canvas', type: 'pointerdown', pointerId: 1, pointerType: 'touch', clientX: 130, clientY: 422 },
+    { target: 'canvas', type: 'pointerdown', pointerId: 2, pointerType: 'touch', clientX: 260, clientY: 422 },
+    { target: 'canvas', type: 'touchmove', touches: [
+      { clientX: 130, clientY: 422 }, { clientX: 260, clientY: 422 },
+    ] },
+    { target: 'canvas', type: 'pointermove', pointerId: 1, pointerType: 'touch', clientX: 120, clientY: 422 },
+    { target: 'canvas', type: 'pointermove', pointerId: 2, pointerType: 'touch', clientX: 270, clientY: 422 },
+    { target: 'canvas', type: 'touchmove', touches: [
+      { clientX: 120, clientY: 422 }, { clientX: 270, clientY: 422 },
+    ] },
+  ]);
+
+  assert.ok(Math.abs(result.zoom - 150 / 130) < 1e-12, `expected one pinch ratio, got ${result.zoom}`);
+  assert.deepEqual(result.camera, result.initialCamera);
+});
+
+test('one touch pointer still rotates the globe', () => {
+  const result = exerciseCameraPointers([
+    { target: 'canvas', type: 'pointerdown', pointerId: 1, pointerType: 'touch', clientX: 130, clientY: 422 },
+    { target: 'canvas', type: 'pointermove', pointerId: 1, pointerType: 'touch', clientX: 135, clientY: 422 },
+  ]);
+
+  assert.ok(Math.abs(result.camera[0] - 0.9995579484716745) < 1e-12);
+  assert.ok(Math.abs(result.camera[2] - 0.02609104239963213) < 1e-12);
+});
+
+test('a stationary single-touch tap still opens the color picker', () => {
+  const result = exerciseCameraPointers([
+    { target: 'canvas', type: 'pointerdown', pointerId: 1, pointerType: 'touch', clientX: 130, clientY: 422 },
+    { target: 'window', type: 'pointerup', pointerId: 1, pointerType: 'touch', clientX: 130, clientY: 422 },
+  ]);
+
+  assert.equal(result.colorPickerOpens, 1);
+});
+
+test('the wheel still zooms the globe', () => {
+  const result = exerciseCameraPointers([
+    { target: 'canvas', type: 'wheel', deltaY: -100 },
+  ]);
+
+  assert.ok(Math.abs(result.zoom - Math.exp(0.12)) < 1e-12);
+});
+
+test('double-click still applies its zoom step', () => {
+  const result = exerciseCameraPointers([
+    { target: 'canvas', type: 'dblclick', clientX: 195, clientY: 422 },
+  ]);
+
+  assert.equal(result.zoom, 2.4);
+});
+
+test('the remaining finger resumes dragging from its current position after a pinch', () => {
+  const result = exerciseCameraPointers([
+    { target: 'canvas', type: 'pointerdown', pointerId: 1, pointerType: 'touch', clientX: 130, clientY: 422 },
+    { target: 'canvas', type: 'pointerdown', pointerId: 2, pointerType: 'touch', clientX: 260, clientY: 422 },
+    { target: 'canvas', type: 'pointermove', pointerId: 1, pointerType: 'touch', clientX: 120, clientY: 422 },
+    { target: 'canvas', type: 'pointermove', pointerId: 2, pointerType: 'touch', clientX: 270, clientY: 422 },
+    { target: 'window', type: 'pointerup', pointerId: 2, pointerType: 'touch', clientX: 270, clientY: 422 },
+    { target: 'canvas', type: 'pointermove', pointerId: 1, pointerType: 'touch', clientX: 125, clientY: 422 },
+  ]);
+  const expectedCamera = [
+    0.9995357800271572, 0.014606550537931104, 0.0267371114162553,
+    0, 0.8775825618903728, -0.479425538604203,
+    -0.030466776093022785, 0.47920297969369197, 0.8771751705373246,
+  ];
+
+  result.camera.forEach((value, index) => {
+    assert.ok(
+      Math.abs(value - expectedCamera[index]) < 1e-12,
+      `camera entry ${index} started from the wrong post-pinch position`,
+    );
+  });
+});
+
+test('a cancelled pinch also rebases dragging to the remaining finger', () => {
+  const result = exerciseCameraPointers([
+    { target: 'canvas', type: 'pointerdown', pointerId: 1, pointerType: 'touch', clientX: 130, clientY: 422 },
+    { target: 'canvas', type: 'pointerdown', pointerId: 2, pointerType: 'touch', clientX: 260, clientY: 422 },
+    { target: 'canvas', type: 'pointermove', pointerId: 1, pointerType: 'touch', clientX: 120, clientY: 422 },
+    { target: 'canvas', type: 'pointermove', pointerId: 2, pointerType: 'touch', clientX: 270, clientY: 422 },
+    { target: 'canvas', type: 'pointercancel', pointerId: 2, pointerType: 'touch', clientX: 270, clientY: 422 },
+    { target: 'canvas', type: 'pointermove', pointerId: 1, pointerType: 'touch', clientX: 125, clientY: 422 },
+  ]);
+
+  assert.ok(Math.abs(result.camera[0] - 0.9995357800271572) < 1e-12);
+  assert.ok(Math.abs(result.camera[2] - 0.0267371114162553) < 1e-12);
+});
+
+test('an unrelated touch release cannot consume a canvas tap', () => {
+  const result = exerciseCameraPointers([
+    { target: 'canvas', type: 'pointerdown', pointerId: 1, pointerType: 'touch', clientX: 130, clientY: 422 },
+    { target: 'window', type: 'pointerup', pointerId: 99, pointerType: 'touch', clientX: 300, clientY: 200 },
+    { target: 'window', type: 'pointerup', pointerId: 1, pointerType: 'touch', clientX: 130, clientY: 422 },
+  ]);
+
+  assert.equal(result.colorPickerOpens, 1);
+});
+
+test('an unrelated pointer cancellation cannot interrupt an active pinch', () => {
+  const result = exerciseCameraPointers([
+    { target: 'canvas', type: 'pointerdown', pointerId: 1, pointerType: 'touch', clientX: 130, clientY: 422 },
+    { target: 'canvas', type: 'pointerdown', pointerId: 2, pointerType: 'touch', clientX: 260, clientY: 422 },
+    { target: 'canvas', type: 'pointercancel', pointerId: 99, pointerType: 'mouse', clientX: 300, clientY: 200 },
+    { target: 'canvas', type: 'pointermove', pointerId: 1, pointerType: 'touch', clientX: 120, clientY: 422 },
+    { target: 'canvas', type: 'pointermove', pointerId: 2, pointerType: 'touch', clientX: 270, clientY: 422 },
+  ]);
+
+  assert.ok(Math.abs(result.zoom - 150 / 130) < 1e-12, `expected uninterrupted pinch, got ${result.zoom}`);
 });
 
 test('automatic history replay stops on the completed closure snapshot', () => {
