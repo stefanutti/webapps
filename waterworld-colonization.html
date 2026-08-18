@@ -23,8 +23,9 @@
          white-space:nowrap}
   .subtitle{font-size:12.5px;color:var(--foam-dim);margin-top:6px;line-height:1.45}
   .ledger{top:22px;right:24px;min-width:225px;font-family:ui-monospace,'SF Mono',Menlo,Consolas,monospace}
+  .ledger-head{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:10px}
   .ledger h2{font-family:Georgia,'Times New Roman',serif;font-style:italic;font-weight:400;
-             font-size:26px;letter-spacing:.01em;color:var(--foam);margin-bottom:10px}
+             font-size:26px;letter-spacing:.01em;color:var(--foam)}
   .row{display:flex;justify-content:space-between;gap:14px;font-size:12.5px;padding:3px 0;color:var(--foam)}
   .row .k{color:var(--foam-dim);white-space:nowrap}
   .row.hidden{display:none}   /* a diagnostic row only earns its line once it has something to say */
@@ -33,9 +34,11 @@
   .inv .ok{color:var(--ok)} .inv .bad{color:var(--bad)} .inv .warn{color:var(--warn)}
   .controls{bottom:24px;right:24px;display:flex;flex-wrap:wrap;align-items:center;
          justify-content:flex-end;gap:0;max-width:calc(100vw - 48px);padding:6px 8px}
-  .ctrl-group{display:flex;align-items:center;gap:8px;padding:0 8px}
+  .ctrl-group{display:flex;align-items:center;gap:8px;padding:0 5px}
   .ctrl-group.swatches{gap:5px}
-  .ctrl-group+.ctrl-group{border-left:1px solid var(--hairline)}
+  .close-option{display:inline-flex;align-items:center;cursor:pointer;user-select:none}
+  .close-option input{width:15px;height:15px;accent-color:#8FC6DB;cursor:pointer}
+  .close-option input:disabled{cursor:default}
   button{font-family:inherit;font-size:12.5px;letter-spacing:.06em;color:var(--foam);cursor:pointer;
          background:transparent;border:1px solid var(--hairline);border-radius:8px;padding:7px 14px;
          display:inline-flex;align-items:center;gap:6px;
@@ -47,7 +50,22 @@
   button.primary{background:rgba(215,238,244,.10)}
   .icon-btn{padding:8px}
   .ico-svg{width:14px;height:14px;display:block;flex-shrink:0}
-  input[type=range]{width:100px;accent-color:#8FC6DB;background:transparent}
+  .ctrl-group.pace{position:relative}
+  #speedPopover{position:absolute;bottom:calc(100% + 10px);left:50%;transform:translateX(-50%);
+                padding:10px 8px;background:var(--panel);border:1px solid var(--hairline);
+                border-radius:9px;backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);
+                box-shadow:0 8px 24px rgba(0,0,0,.28)}
+  #speedPopover[hidden]{display:none}
+  #speed{width:18px;height:112px;writing-mode:vertical-lr;direction:rtl;
+         accent-color:#8FC6DB;background:transparent}
+  .stats-popup{position:absolute;top:calc(100% + 10px);right:0;width:290px;max-height:calc(100vh - 300px);
+               overflow:auto;padding:12px 14px;background:rgba(13,24,44,.94);border:1px solid var(--hairline);
+               border-radius:10px;box-shadow:0 12px 32px rgba(0,0,0,.32)}
+  .stats-popup[hidden]{display:none}
+  .stats-section+.stats-section{margin-top:12px;padding-top:10px;border-top:1px solid var(--hairline)}
+  .stats-section h3{font-family:Georgia,'Times New Roman',serif;font-size:13px;font-style:italic;
+                    font-weight:400;color:var(--foam-dim);margin-bottom:5px}
+  .stats-popup .row{font-size:11.5px;padding:2px 0}
   input[type=color]{width:26px;height:22px;border:1px solid var(--hairline);border-radius:5px;
          background:transparent;padding:0;cursor:pointer}
   input[type=color]::-webkit-color-swatch-wrapper{padding:2px}
@@ -67,21 +85,19 @@
     /* v12: sized to its widest row instead of a fixed slice of the viewport, so the labels keep
        clear of the numbers however many digits the counters reach */
     .ledger{top:14px;right:14px;min-width:0;width:max-content;max-width:62vw}
-    .ledger h2{font-size:16px;margin-bottom:6px}
+    .ledger-head{margin-bottom:6px}
+    .ledger h2{font-size:16px}
     .row{font-size:10.5px;padding:2px 0;gap:10px}
     .inv{font-size:9.5px;margin-top:6px;padding-top:6px}
-    /* v16: the toolbar has to come out as ONE row on a phone — with two more buttons in it since the
-       step controls arrived, the old paddings pushed Export and Restart onto a second line. Everything
-       fixed-size is tightened a little, and the pace slider is made the elastic one: its flex-basis is
-       the narrow 40px the row is laid out against, so it never causes a wrap, and it then grows into
-       whatever room the wider phones leave over. */
+    .stats-popup{width:min(280px,calc(100vw - 28px));max-height:calc(100vh - 220px)}
+    /* v16: the toolbar has to come out as ONE row on a phone — with the step controls included,
+       fixed-size controls are tightened a little. The pace slider now lives in a vertical popover,
+       so only its compact trigger participates in this row. */
     .controls{left:8px;right:8px;bottom:10px;max-width:calc(100vw - 16px);
               justify-content:center;gap:4px 0;padding:5px}
     .ctrl-group{padding:0 4px;gap:5px}
-    .ctrl-group.pace{flex:1 1 auto;min-width:0}
     button{padding:6px 9px;font-size:11px}
     .icon-btn{padding:5px}
-    input[type=range]{width:40px;flex:1 1 40px;max-width:100px}
     input[type=color]{width:22px;height:20px}
     .ctrl-group.swatches{gap:4px}
     #fullToast{bottom:150px}
@@ -109,14 +125,47 @@
 </div>
 
 <div class="panel ledger">
-  <h2>Ship's log</h2>
+  <div class="ledger-head">
+    <h2>Ship's log</h2>
+    <button id="statsToggle" class="icon-btn" title="Statistics" aria-label="Open map statistics"
+            aria-expanded="false" aria-haspopup="dialog" aria-controls="statsPopup">
+      <svg class="ico-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+           stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">
+        <line x1="5" y1="20" x2="5" y2="12"/>
+        <line x1="12" y1="20" x2="12" y2="4"/>
+        <line x1="19" y1="20" x2="19" y2="8"/>
+      </svg>
+    </button>
+  </div>
   <div class="row"><span class="k">Faces + Ocean</span><span id="sF">2</span></div>
   <div class="row"><span class="k">Coast C</span><span id="sC">2</span></div>
   <div class="row"><span class="k">Pentagons F5</span><span id="s5">0</span></div>
   <div class="row"><span class="k">Hexagons F6</span><span id="s6">0</span></div>
   <div class="row"><span class="k">Wells n&gt;6</span><span id="sW">0</span></div>
+  <div class="row"><span class="k">Largest face</span><span id="sMax">2</span></div>
   <div class="row hidden" id="rowFB"><span class="k">Fallback F3</span><span id="sFB">0</span></div>
   <div class="inv"><b>Σ(6−n)F<sub>n</sub> − C = <span id="sInv" class="ok">6 ✓</span></b></div>
+  <div id="statsPopup" class="stats-popup" role="dialog" aria-label="Map statistics" tabindex="-1" hidden>
+    <section class="stats-section">
+      <h3>Face distribution</h3>
+      <div id="faceDistribution"></div>
+    </section>
+    <section class="stats-section" id="topologyStatistics">
+      <h3>Topology</h3>
+      <div class="row"><span class="k">Vertices</span><span id="dVertices">0</span></div>
+      <div class="row"><span class="k">Edges</span><span id="dEdges">0</span></div>
+      <div class="row"><span class="k">Internal faces</span><span id="dInternal">0</span></div>
+      <div class="row"><span class="k">Ocean-facing faces</span><span id="dOceanFacing">0</span></div>
+    </section>
+    <section class="stats-section" id="measureStatistics">
+      <h3>Measures</h3>
+      <div class="row"><span class="k">Smallest face</span><span id="dMinimum">0</span></div>
+      <div class="row"><span class="k">Average face</span><span id="dAverage">0</span></div>
+      <div class="row"><span class="k">Largest face</span><span id="dMaximum">0</span></div>
+      <div class="row"><span class="k">Ocean degree</span><span id="dOceanDegree">0</span></div>
+      <div class="row"><span class="k">Fallback F3</span><span id="dFallbacks">0</span></div>
+    </section>
+  </div>
 </div>
 
 <div class="panel full-toast" id="fullToast">The island now fills the globe — press Restart to grow a new one.
@@ -125,7 +174,7 @@
   <button class="toast-x" id="closeToastX" aria-label="Dismiss message">×</button></div>
 
 <div class="panel controls">
-  <div class="ctrl-group">
+  <div class="ctrl-group primary-controls">
     <button id="btnPrev" class="icon-btn" title="Previous move" aria-label="Step back one move">
       <svg class="ico-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
            stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">
@@ -138,12 +187,6 @@
         <polygon points="6 3 20 12 6 21 6 3"/>
       </svg>
     </button>
-    <button id="btnNext" class="icon-btn" title="Next move" aria-label="Advance one move">
-      <svg class="ico-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-           stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">
-        <polyline points="9 18 15 12 9 6"/>
-      </svg>
-    </button>
     <button id="btnClose" class="icon-btn" title="Close map" aria-label="Promote every small face and complete the map; the ocean stays open">
       <svg class="ico-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
            stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">
@@ -151,9 +194,30 @@
         <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
       </svg>
     </button>
+    <button id="btnNext" class="icon-btn" title="Next move" aria-label="Advance one move">
+      <svg class="ico-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+           stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">
+        <polyline points="9 18 15 12 9 6"/>
+      </svg>
+    </button>
+    <label class="close-option" title="Maximize ocean">
+      <input id="maximizeOcean" type="checkbox" checked aria-label="Maximize ocean">
+    </label>
   </div>
   <div class="ctrl-group pace">
-    <input id="speed" type="range" min="1" max="40" value="7" step="1" title="Pace" aria-label="Moves per second">
+    <button id="speedToggle" class="icon-btn" title="Speed" aria-label="Adjust growth speed"
+            aria-expanded="false" aria-haspopup="dialog" aria-controls="speedPopover">
+      <svg class="ico-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+           stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">
+        <path d="M4 15a8 8 0 1 1 16 0"/>
+        <line x1="12" y1="15" x2="17" y2="9"/>
+        <circle cx="12" cy="15" r="1"/>
+      </svg>
+    </button>
+    <div id="speedPopover" role="dialog" aria-label="Growth speed" hidden>
+      <input id="speed" type="range" min="1" max="40" value="7" step="1" title="Moves per second"
+             aria-label="Moves per second" aria-orientation="vertical">
+    </div>
   </div>
   <div class="ctrl-group swatches">
     <input id="col5" type="color" value="#FF2E2E" title="Pentagons F5" aria-label="Color for faces with five sides">
@@ -276,7 +340,7 @@
    Sigma(6-n)Fn = 12 over ALL faces of the closed sphere map.
 
    v7: nicer vertex spacing. Split points used to be allowed as
-   close as 8 planar units to an existing vertex — with DELTA=10
+   close as 8 planar units to an existing vertex — with DELTA=3
    between consecutive arcs, two radial borders could end up
    nearly coincident on screen. spreadT() now keeps splits at
    least SPLIT_MARGIN=24 units (capped at 40% of the edge, so
@@ -348,8 +412,8 @@ function resize(){
 }
 
 /* ---------- constants ---------- */
-const DELTA = 10;                  // delta_step
-const R0 = DELTA * 5;              // initial face radius (planar)
+const DELTA = 3;                   // radial step between successive shells
+const R0 = 50;                     // initial face radius (planar), independent from DELTA
 const PHI_MAX = 2.85;              // cap edge: how close to the antipodal point we allow
 const Rs = 620;                    // FIXED sphere radius (world units) — never rescaled
 const RMAX = Rs * PHI_MAX;         // max planar radius the construction may reach
@@ -426,7 +490,7 @@ function sweepOf(P){
 let coast, faces, sumLand, moves, maxR, invOK, running=true, full=false;
 let inkLines;                      // every border ever drawn, as planar polylines
 let fallbackCount;                 // how many times attemptMove() hit the F3 fallback
-let closing, closeDone;            // v6: "Close map" endgame state
+let closing, closeDone, closingMaximizeOcean=true;   // v6: "Close map" endgame state and strategy
 let closeToastTimer=null;          // auto-dismiss handle for the "map closed" message
 let fullToastTimer=null, fullToastSeen=false;   // v16: the "globe is full" notice fades too, once per full state
 let moveLog=[], logIdx=-1;        // v15: one snapshot per state, logIdx = where we currently stand
@@ -746,27 +810,31 @@ function pickInsertionIndex(){   /* k=0 endpoints are coast[i] and coast[i+1]: a
   }
   return best;
 }
-function tryPromotionMove(){
+function tryPromotionMove(maximizeOcean=true){
   const C=coast.length;
   const deficient=[], defFaces=new Set();
   for(let x=0;x<C;x++) if(coast[x].face.n<5){ deficient.push(x); defFaces.add(coast[x].face); }
   let points=0; for(const f of defFaces) points+=5-f.n;   // promotions still owed to coast faces
   const shores=new Set(); for(const e of coast) shores.add(e.face);
-  if(points===0 && C>=5 && shores.size>=2) return true;   // coast faces F5+, ocean F5+ (degree C) — complete
+  if(points===0 && C>=5 && shores.size>=2){
+    if(maximizeOcean || C===5) return true;
+    execStandardMove(0,C-4);                    // minimum mode: one final safe face leaves ocean F5
+    return false;
+  }
 
   /* headroom rule: a k-move shrinks the coast to C+1-k, and each of the points still owed will
      need one shrinking move of its own before the end — so never shrink past C' = 4+points, or
      the final promotions would have to mint new small faces and the endgame would cycle forever */
-  const maxK=Math.min(8, C-3-points);
+  const maxK=C-3-points;
 
-  /* preferred: a standard k>=2 move with a deficient face as an endpoint — its new face is born
-     safe (n=k+3>=5), the endpoint gains +1. Swept deterministically so no legal move is missed,
-     but starting from a random deficient edge to keep the closing visually organic */
+  /* A standard k>=2 move is born safe. Maximum mode tries the least coast-consuming move first;
+     minimum mode starts at the largest move allowed by the headroom rule. */
   if(deficient.length && maxK>=2){
     const start=(Math.random()*deficient.length)|0;
-    for(let s=0;s<deficient.length;s++){
-      const d=deficient[(start+s)%deficient.length];
-      for(let k=2;k<=maxK;k++){
+    for(let turn=0;turn<=maxK-2;turn++){
+      const k=maximizeOcean ? 2+turn : maxK-turn;
+      for(let s=0;s<deficient.length;s++){
+        const d=deficient[(start+s)%deficient.length];
         for(const i of [d, (d-k-1+C)%C]){          // deficient face as either endpoint
           if(canSealWholes(wholesOf(i,k))){ execStandardMove(i,k); return false; }
         }
@@ -774,9 +842,9 @@ function tryPromotionMove(){
     }
   }
 
-  /* next: k=1 across one safe buried edge, with BOTH endpoints deficient (+1 each) — two points
-     gained for the one owed by the new F4, at constant C. This unlocks coasts where safe faces
-     never sit side by side, so no k>=2 wholes run is ever fully safe */
+  /* Use k=1 only when no safe k>=2 move exists. It is an emergency unlock for young coasts where
+     safe faces never sit side by side; mature maps therefore never create a temporary F4 during
+     closing, while small maps can still reach a closable topology instead of getting stuck. */
   if(deficient.length && C>=3){
     for(const i of deficient){
       if(coast[(i+2)%C].face.n<5 && canSealWholes(wholesOf(i,1))){ execStandardMove(i,1); return false; }
@@ -815,7 +883,13 @@ function finishClose(){          /* nothing is buried: the ocean and its coast f
 }
 function closeStep(){
   if(closeDone) return;
-  if(tryPromotionMove()) finishClose();
+  const firstNewFace=faces.length;
+  do{
+    if(tryPromotionMove(closingMaximizeOcean)){ finishClose(); return; }
+    /* k=0/k=1 are emergency unlocks for very young coasts and are born as F3/F4. Keep advancing
+       inside this same visible/history step until every face introduced by the unlock is at least
+       F5, so an invalid intermediate face is never rendered or stored in the move log. */
+  }while(faces.slice(firstNewFace).some(f=>f.n<5));
 }
 
 function attemptMove(){
@@ -846,6 +920,45 @@ function attemptMove(){
 }
 function check(){   /* the ocean counts as one face of degree C, so Σ(6−n)Fn − C = 6 ⇔ Σ = 12 over all faces */
   invOK = (sumLand - coast.length === 6);
+}
+function largestFaceDegree(){
+  let largest=coast.length;                     // the ocean is a face too
+  for(const f of faces) if(f.n>largest) largest=f.n;
+  return largest;
+}
+const FACE_COUNT_LABELS=[['f2','F2'],['f3','F3'],['f4','F4'],['f5','F5'],['f6','F6'],['above6','> F6']];
+function visibleFaceCountRows(counts){
+  return FACE_COUNT_LABELS.map(([key,label])=>[label,counts[key]]).filter(([,count])=>count>0);
+}
+function detailedStatistics(){
+  const degrees=faces.map(f=>f.n); degrees.push(coast.length);   // include the ocean everywhere
+  const faceCounts={f2:0,f3:0,f4:0,f5:0,f6:0,above6:0};
+  for(const n of degrees){
+    if(n>=2 && n<=6) faceCounts['f'+n]++;
+    else if(n>6) faceCounts.above6++;
+  }
+
+  const vertexSet=new Set();
+  for(const f of faces) for(const v of f.vertices) vertexSet.add(v);
+  for(const e of coast){ vertexSet.add(e.a); vertexSet.add(e.b); }
+  const totalFaces=faces.length+1;
+  const degreeSum=degrees.reduce((sum,n)=>sum+n,0);
+  const oceanFacing=new Set(coast.map(e=>e.face));
+  return {
+    faceCounts,
+    vertices:vertexSet.size,
+    edges:Math.max(0,vertexSet.size+totalFaces-2),       // Euler: V - E + F = 2
+    internalFaces:faces.filter(f=>f.sealed).length,
+    oceanFacingFaces:oceanFacing.size,
+    minimumFaceDegree:Math.min(...degrees),
+    averageFaceDegree:degreeSum/degrees.length,
+    maximumFaceDegree:Math.max(...degrees),
+    oceanDegree:coast.length,
+    oceanPerimeter:perimeter(),
+    moves,
+    fallbacks:fallbackCount,
+    invariant:{valid:invOK,value:sumLand-coast.length}
+  };
 }
 function setFull(){
   if(full) return;
@@ -890,7 +1003,7 @@ function snapshot(){
   return {
     recs: faces.map((f,i)=>faceRec(f, prev && prev.recs[i])),
     faces: faces.slice(), coast: coast.slice(), ink: inkLines.slice(),
-    sumLand, moves, maxR, invOK, full, closing, closeDone, fallbackCount
+    sumLand, moves, maxR, invOK, full, closing, closeDone, closingMaximizeOcean, fallbackCount
   };
 }
 function restore(s){
@@ -901,16 +1014,31 @@ function restore(s){
     f.interior=r.interior.slice(); f.vertices=r.vertices.slice();
   }
   sumLand=s.sumLand; moves=s.moves; maxR=s.maxR; invOK=s.invOK;
-  full=s.full; closing=s.closing; closeDone=s.closeDone; fallbackCount=s.fallbackCount;
+  full=s.full; closing=s.closing; closeDone=s.closeDone;
+  closingMaximizeOcean=s.closingMaximizeOcean;
+  if(s.closing || s.closeDone) maximizeOceanEl.checked=closingMaximizeOcean;
+  fallbackCount=s.fallbackCount;
 }
 function resetLog(){ moveLog=[]; logIdx=-1; moveLog.push(snapshot()); logIdx=0; }
 function dropFuture(){ moveLog.length=logIdx+1; }   // for actions that must not replay the old one
 function canStepForward(){ return logIdx<moveLog.length-1 || closing || !full; }
 function stepForward(){
-  if(logIdx<moveLog.length-1){ restore(moveLog[++logIdx]); return true; }   // retrace, don't redraw
+  if(logIdx<moveLog.length-1){
+    restore(moveLog[++logIdx]);
+    if(closeDone && !closing) running=false;   // replay must not cross a completed closure by itself
+    return true;                               // retrace, don't redraw
+  }
   if(!(closing || !full)) return false;
   const m=moves, d=closeDone;
-  closing ? closeStep() : attemptMove();
+  if(closing) closeStep();
+  else{
+    if(closeDone){                             // an explicit growth step makes this closure stale
+      clearTimeout(closeToastTimer);
+      closeToast.classList.remove('show');
+      closeDone=false;
+    }
+    attemptMove();
+  }
   if(moves===m && closeDone===d) return false;   // the move failed or the globe just filled up
   dropFuture(); moveLog.push(snapshot());
   if(moveLog.length>LOG_MAX) moveLog.shift();
@@ -1241,9 +1369,15 @@ function setRunIcon(state){        // state: 'play' | 'pause' | 'done'
 }
 const btnReset=document.getElementById('btnReset');
 const btnClose=document.getElementById('btnClose');
+const maximizeOceanEl=document.getElementById('maximizeOcean');
 const btnPrev=document.getElementById('btnPrev');
 const btnNext=document.getElementById('btnNext');
 const btnExport=document.getElementById('btnExport');
+const statsToggle=document.getElementById('statsToggle');
+const statsPopup=document.getElementById('statsPopup');
+const faceDistribution=document.getElementById('faceDistribution');
+const speedToggle=document.getElementById('speedToggle');
+const speedPopover=document.getElementById('speedPopover');
 const speedEl=document.getElementById('speed');
 const fullToast=document.getElementById('fullToast');
 const closeToast=document.getElementById('closeToast');
@@ -1282,6 +1416,7 @@ function syncControls(){
   if(done) showFullToast(); else { fullToastSeen=false; hideFullToast(); }
   btnPrev.disabled = logIdx<=0;
   btnNext.disabled = !canStepForward();
+  maximizeOceanEl.disabled = closing;
 }
 function manualStep(back){
   running=false;
@@ -1290,7 +1425,35 @@ function manualStep(back){
 }
 btnPrev.onclick=()=>manualStep(true);
 btnNext.onclick=()=>manualStep(false);
+function setSpeedPopover(open){
+  speedPopover.hidden=!open;
+  speedToggle.setAttribute('aria-expanded', String(open));
+}
+function setStatsPopup(open){
+  statsPopup.hidden=!open;
+  statsToggle.setAttribute('aria-expanded', String(open));
+}
+speedToggle.onclick=e=>{
+  e.stopPropagation();
+  const open=speedPopover.hidden;
+  setStatsPopup(false);
+  setSpeedPopover(open);
+  if(open) speedEl.focus();
+};
+speedPopover.onclick=e=>e.stopPropagation();
+addEventListener('click', ()=>setSpeedPopover(false));
+statsToggle.onclick=e=>{
+  e.stopPropagation();
+  const open=statsPopup.hidden;
+  setSpeedPopover(false);
+  setStatsPopup(open);
+  if(open){ updateDetailedStatistics(); statsPopup.focus(); }
+};
+statsPopup.onclick=e=>e.stopPropagation();
+addEventListener('click', ()=>setStatsPopup(false));
 addEventListener('keydown', e=>{
+  if(e.key==='Escape' && !speedPopover.hidden){ setSpeedPopover(false); speedToggle.focus(); return; }
+  if(e.key==='Escape' && !statsPopup.hidden){ setStatsPopup(false); statsToggle.focus(); return; }
   if(e.metaKey||e.ctrlKey||e.altKey) return;
   if(e.target instanceof HTMLInputElement) return;   // the pace slider owns the arrows while focused
   if(e.key==='ArrowLeft'){ e.preventDefault(); manualStep(true); }
@@ -1301,6 +1464,7 @@ document.getElementById('fullToastX').onclick=hideFullToast;   // dismissing it 
 btnClose.onclick=()=>{
   if(closing || moves===0) return;
   dropFuture();                        // v15: closing replaces whatever growth was recorded ahead
+  closingMaximizeOcean=maximizeOceanEl.checked;
   closeDone=false;                     // allow re-closing later if growth reintroduces small faces
   closing=true; running=true; btnRun.disabled=false; setRunIcon('pause');
   fullToastSeen=false; hideFullToast();
@@ -1370,6 +1534,21 @@ canvas.addEventListener('touchend', e=>{ if(e.touches.length<2) pinchDist=null; 
 reset();
 
 let last=performance.now(), acc=0, statT=0;
+function updateDetailedStatistics(){
+  const s=detailedStatistics();
+  faceDistribution.innerHTML=visibleFaceCountRows(s.faceCounts)
+    .map(([label,count])=>'<div class="row"><span class="k">'+label+'</span><span>'+count+'</span></div>')
+    .join('');
+  document.getElementById('dVertices').textContent=s.vertices;
+  document.getElementById('dEdges').textContent=s.edges;
+  document.getElementById('dInternal').textContent=s.internalFaces;
+  document.getElementById('dOceanFacing').textContent=s.oceanFacingFaces;
+  document.getElementById('dMinimum').textContent=s.minimumFaceDegree;
+  document.getElementById('dAverage').textContent=s.averageFaceDegree.toFixed(2);
+  document.getElementById('dMaximum').textContent=s.maximumFaceDegree;
+  document.getElementById('dOceanDegree').textContent=s.oceanDegree;
+  document.getElementById('dFallbacks').textContent=s.fallbacks;
+}
 function updateStats(){
   let f5=0,f6=0,w=0; for(const f of faces){ if(f.n===5)f5++; else if(f.n===6)f6++; else if(f.n>6)w++; }
   document.getElementById('sF').textContent=faces.length+1;   // +1: the ocean is a face of the map too, and is never buried
@@ -1377,11 +1556,13 @@ function updateStats(){
   document.getElementById('s5').textContent=f5;
   document.getElementById('s6').textContent=f6;
   document.getElementById('sW').textContent=w;
+  document.getElementById('sMax').textContent=largestFaceDegree();
   document.getElementById('sFB').textContent=fallbackCount;
   document.getElementById('rowFB').classList.toggle('hidden', fallbackCount===0);
   const el=document.getElementById('sInv');
   if(moves===0){ el.textContent='— only 1 land face'; el.className='warn'; }
   else{ el.textContent=invOK?'6 ✓':(sumLand-coast.length)+' ✗'; el.className=invOK?'ok':'bad'; }
+  if(!statsPopup.hidden) updateDetailedStatistics();
   syncControls();
 }
 const FRAME_BUDGET_MS = 14;   // max pace: no acc/dt throttling, just spend the frame stepping
@@ -1392,11 +1573,11 @@ function frame(now){
   if(running && canStepForward()){
     if(+speedEl.value >= +speedEl.max){
       const deadline=performance.now()+FRAME_BUDGET_MS;
-      while(performance.now()<deadline){ if(!stepForward()) break; }
+      while(running && performance.now()<deadline){ if(!stepForward()) break; }
       acc=0;
     } else {
       acc+=dt*(+speedEl.value);
-      let n=0; while(acc>=1 && n<12){
+      let n=0; while(running && acc>=1 && n<12){
         acc-=1; if(!stepForward()) break; n++;
       }
     }
