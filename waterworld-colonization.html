@@ -30,6 +30,8 @@
   .row .k{color:var(--foam-dim);white-space:nowrap}
   .row.hidden{display:none}   /* a diagnostic row only earns its line once it has something to say */
   .ledger:not(.extended) .extended-only{display:none}
+  .ledger.collapsed .ledger-body{display:none}
+  .ledger.collapsed .ledger-head{margin-bottom:0}
   .inv{margin-top:10px;padding-top:9px;border-top:1px solid var(--hairline);font-size:12px}
   .inv b{font-weight:400}
   .inv .ok{color:var(--ok)} .inv .bad{color:var(--bad)} .inv .warn{color:var(--warn)}
@@ -97,9 +99,8 @@
   @media (max-width:760px){
     .panel{padding:10px 12px}
     .cartouche{top:14px;left:14px;max-width:36vw}
-    .eyebrow{font-size:9px}
+    .eyebrow,.subtitle{display:none}
     .title{font-size:17px;white-space:normal}
-    .subtitle{display:none}
     /* v12: sized to its widest row instead of a fixed slice of the viewport, so the labels keep
        clear of the numbers however many digits the counters reach */
     .ledger{top:14px;right:14px;min-width:0;width:max-content;max-width:62vw}
@@ -144,8 +145,8 @@
 <div class="panel ledger" id="shipLog">
   <div class="ledger-head">
     <h2>Ship's log</h2>
-    <button id="logViewToggle" class="icon-btn" title="Expand ship's log" aria-label="Expand ship's log"
-            aria-expanded="false">
+    <button id="logViewToggle" class="icon-btn" title="Show extended ship's log"
+            aria-label="Show extended ship's log" aria-controls="shipLogBody">
       <svg class="ico-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
            stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">
         <line x1="5" y1="20" x2="5" y2="12"/>
@@ -154,20 +155,29 @@
       </svg>
     </button>
   </div>
-  <div class="row"><span class="k">Faces + Ocean</span><span id="sF">2</span></div>
-  <div class="row"><span class="k">Coast C</span><span id="sC">2</span></div>
-  <div class="row extended-only hidden" id="row2"><span class="k">Digons F2</span><span id="s2">0</span></div>
-  <div class="row extended-only hidden" id="row3"><span class="k">Triangles F3</span><span id="s3">0</span></div>
-  <div class="row extended-only hidden" id="row4"><span class="k">Quadrilaterals F4</span><span id="s4">0</span></div>
-  <div class="row"><span class="k">Pentagons F5</span><span id="s5">0</span></div>
-  <div class="row"><span class="k">Hexagons F6</span><span id="s6">0</span></div>
-  <div class="row"><span class="k">Wells n&gt;6</span><span id="sW">0</span></div>
-  <div class="row extended-only"><span class="k">Vertices</span><span id="sVertices">0</span></div>
-  <div class="row extended-only"><span class="k">Edges</span><span id="sEdges">0</span></div>
-  <div class="row extended-only"><span class="k">Internal faces</span><span id="sInternal">0</span></div>
-  <div class="row"><span class="k">Largest face</span><span id="sMax">2</span></div>
-  <div class="row hidden" id="rowFB"><span class="k">Fallback F3</span><span id="sFB">0</span></div>
-  <div class="inv"><b>Σ(6−n)F<sub>n</sub> − C = <span id="sInv" class="ok">6 ✓</span></b></div>
+  <div class="ledger-body" id="shipLogBody">
+    <div class="row"><span class="k">Faces + Ocean</span><span id="sF">2</span></div>
+    <div class="row"><span class="k">Coast C</span><span id="sC">2</span></div>
+    <div class="row extended-only hidden" id="row2"><span class="k">Digons F2</span><span id="s2">0</span></div>
+    <div class="row extended-only hidden" id="row3"><span class="k">Triangles F3</span><span id="s3">0</span></div>
+    <div class="row extended-only hidden" id="row4"><span class="k">Quadrilaterals F4</span><span id="s4">0</span></div>
+    <div class="row"><span class="k">Pentagons F5</span><span id="s5">0</span></div>
+    <div class="row"><span class="k">Hexagons F6</span><span id="s6">0</span></div>
+    <div class="row"><span class="k">Wells n&gt;6</span><span id="sW">0</span></div>
+    <div class="row extended-only"><span class="k">Vertices</span><span id="sVertices">0</span></div>
+    <div class="row extended-only"><span class="k">Edges</span><span id="sEdges">0</span></div>
+    <div class="row extended-only"><span class="k">Internal faces</span><span id="sInternal">0</span></div>
+    <div class="row extended-only"><span class="k">Vertices 555</span><span id="sV555">0</span></div>
+    <div class="row extended-only"><span class="k">Vertices 556</span><span id="sV556">0</span></div>
+    <div class="row extended-only"><span class="k">Vertices 557</span><span id="sV557">0</span></div>
+    <div class="row extended-only"><span class="k">Vertices 558</span><span id="sV558">0</span></div>
+    <div class="row extended-only"><span class="k">Vertices 559</span><span id="sV559">0</span></div>
+    <div class="row extended-only"><span class="k">Vertices 566</span><span id="sV566">0</span></div>
+    <div class="row extended-only"><span class="k">Vertices 567</span><span id="sV567">0</span></div>
+    <div class="row"><span class="k">Largest face</span><span id="sMax">2</span></div>
+    <div class="row hidden" id="rowFB"><span class="k">Fallback F3</span><span id="sFB">0</span></div>
+    <div class="inv"><b>Σ(6−n)F<sub>n</sub> − C = <span id="sInv" class="ok">6 ✓</span></b></div>
+  </div>
 </div>
 
 <div class="panel full-toast" id="fullToast">The island now fills the globe — press Restart to grow a new one.
@@ -240,7 +250,7 @@
     </div>
   </div>
   <div class="ctrl-group vertex-filter">
-    <button id="vertexFilterToggle" class="icon-btn" title="Highlight vertex configurations"
+    <button id="vertexFilterToggle" class="icon-btn" title="Unavoidable sets"
             aria-label="Highlight vertex configurations" aria-haspopup="dialog"
             aria-controls="vertexFilterPopover" aria-expanded="false">
       <svg class="ico-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
@@ -968,6 +978,7 @@ function largestFaceDegree(){
   for(const f of faces) if(f.n>largest) largest=f.n;
   return largest;
 }
+const VERTEX_CONFIGURATION_TYPES=['555','556','557','558','559','566','567'];
 function shipLogStatistics(){
   const degrees=faces.map(f=>f.n); degrees.push(coast.length);   // include the ocean everywhere
   const faceCounts={f2:0,f3:0,f4:0,f5:0,f6:0,above6:0};
@@ -979,12 +990,17 @@ function shipLogStatistics(){
   const vertexSet=new Set();
   for(const f of faces) for(const v of f.vertices) vertexSet.add(v);
   for(const e of coast){ vertexSet.add(e.a); vertexSet.add(e.b); }
+  const vertexCounts=Object.fromEntries(VERTEX_CONFIGURATION_TYPES.map(type=>[type,0]));
+  for(const {signature} of vertexConfigurations()){
+    if(Object.prototype.hasOwnProperty.call(vertexCounts,signature)) vertexCounts[signature]++;
+  }
   const totalFaces=faces.length+1;
   return {
     faceCounts,
     vertices:vertexSet.size,
     edges:Math.max(0,vertexSet.size+totalFaces-2),       // Euler: V - E + F = 2
-    internalFaces:faces.filter(f=>f.sealed).length
+    internalFaces:faces.filter(f=>f.sealed).length,
+    vertexCounts
   };
 }
 function vertexConfigurations(){
@@ -1236,6 +1252,7 @@ let stars=[]; (function(){ for(let s=0;s<130;s++)
 function drawVertexHighlights(){
   if(selectedVertexConfigurations.size===0) return;
   const near=[], far=[];
+  const markerRadius=3+3*clamp(Math.log2(Math.max(1,zoom))/3,0,1);
   for(const item of vertexConfigurations()){
     if(!selectedVertexConfigurations.has(item.signature)) continue;
     const point={};
@@ -1246,9 +1263,9 @@ function drawVertexHighlights(){
     ctx.save();
     ctx.globalAlpha=alpha;
     ctx.fillStyle='#D3A330';
-    ctx.beginPath(); ctx.arc(point.x,point.y,6/scale,0,7); ctx.fill();
+    ctx.beginPath(); ctx.arc(point.x,point.y,markerRadius/scale,0,7); ctx.fill();
     ctx.fillStyle='#FFF6D6';
-    ctx.beginPath(); ctx.arc(point.x,point.y,2.4/scale,0,7); ctx.fill();
+    ctx.beginPath(); ctx.arc(point.x,point.y,markerRadius*0.4/scale,0,7); ctx.fill();
     ctx.restore();
   }
   for(const point of far) marker(point,0.28);
@@ -1526,7 +1543,7 @@ function syncVertexFilterControls(){
     : count+' vertex configuration'+(count===1?'':'s')+' highlighted';
   vertexFilterToggle.classList.toggle('active', count>0);
   vertexFilterToggle.setAttribute('aria-label', label);
-  vertexFilterToggle.title=label;
+  vertexFilterToggle.title='Unavoidable sets';
 }
 syncVertexFilterControls();
 vertexFilterToggle.onclick=e=>{
@@ -1604,14 +1621,21 @@ speedToggle.onclick=e=>{
 };
 speedPopover.onclick=e=>e.stopPropagation();
 addEventListener('click', ()=>setSpeedPopover(false));
-function setShipLogExpanded(expanded){
-  shipLog.classList.toggle('extended', expanded);
-  const label=expanded ? "Compact ship's log" : "Expand ship's log";
-  logViewToggle.setAttribute('aria-expanded', String(expanded));
+let shipLogView='base';
+function setShipLogView(view){
+  shipLogView=view;
+  shipLog.classList.toggle('extended', view==='extended');
+  shipLog.classList.toggle('collapsed', view==='collapsed');
+  const label=view==='base' ? "Show extended ship's log"
+    : view==='extended' ? "Collapse ship's log"
+    : "Show basic ship's log";
   logViewToggle.setAttribute('aria-label', label);
   logViewToggle.title=label;
 }
-logViewToggle.onclick=()=>setShipLogExpanded(!shipLog.classList.contains('extended'));
+setShipLogView('base');
+logViewToggle.onclick=()=>setShipLogView(
+  shipLogView==='base' ? 'extended' : shipLogView==='extended' ? 'collapsed' : 'base'
+);
 addEventListener('keydown', e=>{
   if(e.key==='Escape' && !speedPopover.hidden){ setSpeedPopover(false); speedToggle.focus(); return; }
   if(e.metaKey||e.ctrlKey||e.altKey) return;
@@ -1761,6 +1785,9 @@ function updateStats(){
   document.getElementById('sVertices').textContent=s.vertices;
   document.getElementById('sEdges').textContent=s.edges;
   document.getElementById('sInternal').textContent=s.internalFaces;
+  for(const type of VERTEX_CONFIGURATION_TYPES){
+    document.getElementById('sV'+type).textContent=s.vertexCounts[type];
+  }
   document.getElementById('sMax').textContent=largestFaceDegree();
   document.getElementById('sFB').textContent=fallbackCount;
   document.getElementById('rowFB').classList.toggle('hidden', fallbackCount===0);

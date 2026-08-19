@@ -160,6 +160,25 @@ function classifiedVertexFixture() {
   return run();
 }
 
+function classifiedVertexCounts() {
+  const algorithm = growthAlgorithm();
+  const run = new Function(`${algorithm}
+    const coastal={name:'coastal'}, internal={name:'internal'};
+    const shore=[coastal,{name:'s1'},{name:'s2'},{name:'s3'},{name:'s4'},{name:'s5'}];
+    const fillers=Array.from({length:18},(_,i)=>({name:'p'+i}));
+    faces=[
+      {n:7,sealed:false,vertices:[internal,...fillers.slice(0,6)]},
+      {n:5,sealed:false,vertices:[coastal,internal,...fillers.slice(6,9)]},
+      {n:6,sealed:true,vertices:[internal,...fillers.slice(9,14)]},
+      {n:5,sealed:false,vertices:[coastal,...fillers.slice(14,18)]},
+    ];
+    coast=shore.map((a,i)=>({a,b:shore[(i+1)%shore.length]}));
+    return shipLogStatistics().vertexCounts;
+  `);
+
+  return run();
+}
+
 function renderShipLogStatistics() {
   const start = html.indexOf('function updateStats()');
   const end = html.indexOf('\nconst FRAME_BUDGET_MS', start);
@@ -169,6 +188,7 @@ function renderShipLogStatistics() {
   const elements = Object.fromEntries([
     'sF', 'sC', 's2', 's3', 's4', 's5', 's6', 'sW', 'sMax',
     'sVertices', 'sEdges', 'sInternal', 'sFB', 'sInv',
+    'sV555', 'sV556', 'sV557', 'sV558', 'sV559', 'sV566', 'sV567',
     'row2', 'row3', 'row4', 'rowFB',
   ].map(id => [id, {
     textContent: '',
@@ -182,13 +202,14 @@ function renderShipLogStatistics() {
     vertices: 19,
     edges: 31,
     internalFaces: 7,
+    vertexCounts: { 555: 1, 556: 2, 557: 3, 558: 4, 559: 5, 566: 6, 567: 7 },
   };
   const faces = [{ n: 5 }];
   const coast = new Array(5);
 
   const run = new Function(
     'document', 'elements', 'faces', 'coast', 'fallbackCount', 'moves', 'invOK', 'sumLand',
-    'shipLogStatistics', 'largestFaceDegree', 'syncControls',
+    'shipLogStatistics', 'largestFaceDegree', 'syncControls', 'VERTEX_CONFIGURATION_TYPES',
     `${html.slice(start, end)}
       updateStats();
       return {
@@ -200,7 +221,7 @@ function renderShipLogStatistics() {
 
   return run(
     document, elements, faces, coast, 0, 1, true, 11,
-    () => statistics, () => 5, () => {},
+    () => statistics, () => 5, () => {}, ['555','556','557','558','559','566','567'],
   );
 }
 
@@ -399,7 +420,7 @@ function restoredCloseStrategy({ closingSnapshot, pendingPreference }) {
 function exerciseSpeedPopover() {
   const functionStart = html.indexOf('function setSpeedPopover(open)');
   const handlerStart = html.indexOf('speedToggle.onclick', functionStart);
-  const handlerEnd = html.indexOf('function setShipLogExpanded(expanded)', handlerStart);
+  const handlerEnd = html.indexOf('function setShipLogView(view)', handlerStart);
   const keydownStart = html.indexOf("addEventListener('keydown'", handlerEnd);
   const keydownEnd = html.indexOf("document.getElementById('closeToastX')", keydownStart);
   assert.notEqual(functionStart, -1, 'speed popover function not found');
@@ -465,7 +486,7 @@ function exerciseSpeedPopover() {
 }
 
 function exerciseShipLogViewToggle() {
-  const start = html.indexOf('function setShipLogExpanded(expanded)');
+  const start = html.indexOf('let shipLogView=');
   const end = html.indexOf("\naddEventListener('keydown'", start);
   assert.notEqual(start, -1, 'Ship log view toggle not found');
   assert.notEqual(end, -1, 'Ship log view toggle boundary not found');
@@ -480,14 +501,15 @@ function exerciseShipLogViewToggle() {
     },
   };
   const logViewToggle = {
-    title: "Expand ship's log",
-    attributes: { 'aria-expanded': 'false', 'aria-label': "Expand ship's log" },
+    title: "Show extended ship's log",
+    attributes: { 'aria-label': "Show extended ship's log" },
     setAttribute(name, value) { this.attributes[name] = value; },
   };
   const run = new Function('shipLog', 'logViewToggle', `${html.slice(start, end)}
     const state = () => ({
-      expanded: shipLog.classList.contains('extended'),
-      ariaExpanded: logViewToggle.attributes['aria-expanded'],
+      view: shipLogView,
+      extended: shipLog.classList.contains('extended'),
+      collapsed: shipLog.classList.contains('collapsed'),
       title: logViewToggle.title,
       ariaLabel: logViewToggle.attributes['aria-label'],
     });
@@ -495,10 +517,24 @@ function exerciseShipLogViewToggle() {
     logViewToggle.onclick();
     const expanded = state();
     logViewToggle.onclick();
-    return { initial, expanded, compacted: state() };
+    const collapsed = state();
+    logViewToggle.onclick();
+    return { initial, expanded, collapsed, basic: state() };
   `);
 
   return run(shipLog, logViewToggle);
+}
+
+function compactSelectorIsHidden(selector) {
+  const start = html.indexOf('@media (max-width:760px)');
+  const end = html.indexOf('@media (max-width:360px)', start);
+  assert.notEqual(start, -1, 'compact media query not found');
+  assert.notEqual(end, -1, 'compact media query boundary not found');
+  const rules = [...html.slice(start, end).matchAll(/([^{}]+)\{([^{}]*)\}/g)];
+  return rules.some(([, selectors, body]) =>
+    selectors.split(',').map(value => value.trim()).includes(selector)
+      && /(?:^|;)\s*display\s*:\s*none\s*(?:;|$)/.test(body),
+  );
 }
 
 function exerciseCategoryColorPopover() {
@@ -629,6 +665,7 @@ function exerciseVertexFilterPopover() {
         expanded: vertexFilterToggle.attributes['aria-expanded'],
         active: vertexFilterToggle.classList.contains('active'),
         label: vertexFilterToggle.attributes['aria-label'],
+        title: vertexFilterToggle.title,
         selected: [...selectedVertexConfigurations],
         pressed: Object.fromEntries(vertexFilterOptions.map(option=>[
           option.dataset.signature, option.attributes['aria-pressed'],
@@ -661,7 +698,7 @@ function exerciseVertexFilterPopover() {
   );
 }
 
-function renderedVertexHighlights(selectedSignatures) {
+function renderedVertexHighlights(selectedSignatures, zoom=1) {
   const start = html.indexOf('function drawVertexHighlights()');
   const end = html.indexOf('\nfunction draw(){', start);
   assert.notEqual(start, -1, 'vertex highlight renderer not found');
@@ -675,7 +712,7 @@ function renderedVertexHighlights(selectedSignatures) {
     arc(x,y,r){ this.current.push({x,y,r}); },
     fill(){
       for(const arc of this.current){
-        this.marks.push({...arc,alpha:this.globalAlpha,color:this.fillStyle});
+        this.marks.push({...arc,r:Number(arc.r.toFixed(6)),alpha:this.globalAlpha,color:this.fillStyle});
       }
     },
   };
@@ -685,15 +722,16 @@ function renderedVertexHighlights(selectedSignatures) {
     {vertex:{x:50,y:60,v:true},signature:'556'},
   ];
   const run = new Function(
-    'ctx','scale','selectedVertexConfigurations','vertexConfigurations','projTo',
+    'ctx','scale','zoom','selectedVertexConfigurations','vertexConfigurations','projTo','clamp',
     `${html.slice(start,end)}
       drawVertexHighlights();
       return ctx.marks;
     `,
   );
   return run(
-    ctx, 2, new Set(selectedSignatures), () => configurations,
+    ctx, 2, zoom, new Set(selectedSignatures), () => configurations,
     (vertex,out) => Object.assign(out,vertex),
+    (value,min,max) => Math.max(min,Math.min(max,value)),
   );
 }
 
@@ -1015,18 +1053,37 @@ test('vertex configurations are sorted and include the ocean as an adjacent face
   ]);
 });
 
-test('Ship log exposes compact and extended inline views', () => {
+test('compact cartouche leaves only the Waterworld colonization title visible', () => {
+  assert.equal(compactSelectorIsHidden('.eyebrow'), true);
+  assert.equal(compactSelectorIsHidden('.subtitle'), true);
+  assert.equal(compactSelectorIsHidden('.title'), false);
+  assert.match(html, /<div class="title">Waterworld colonization<\/div>/);
+});
+
+test('Ship log exposes title-only, basic, and extended inline views', () => {
   const ledger = html.match(/<div class="panel ledger"[^>]*>[\s\S]*?<\/div>\s*<\/div>/)?.[0];
   assert.ok(ledger, 'Ship log panel not found');
   assert.match(ledger, /id="shipLog"/);
-  assert.match(ledger, /<button id="logViewToggle"[^>]*title="Expand ship's log"[^>]*aria-label="Expand ship's log"[^>]*aria-expanded="false"/);
+  assert.match(ledger, /<button id="logViewToggle"[^>]*title="Show extended ship's log"[^>]*aria-label="Show extended ship's log"[^>]*aria-controls="shipLogBody"/);
+  assert.doesNotMatch(ledger, /id="logViewToggle"[^>]*aria-expanded/);
+  assert.match(ledger, /<div class="ledger-body" id="shipLogBody">/);
   assert.match(ledger, /class="[^"]*extended-only[^"]*" id="row2"/);
   assert.match(ledger, /class="[^"]*extended-only[^"]*" id="row3"/);
   assert.match(ledger, /class="[^"]*extended-only[^"]*" id="row4"/);
   assert.match(ledger, /id="sVertices"/);
   assert.match(ledger, /id="sEdges"/);
   assert.match(ledger, /id="sInternal"/);
+  for(const signature of ['555','556','557','558','559','566','567']){
+    assert.match(ledger, new RegExp(`Vertices ${signature}[\\s\\S]*?id="sV${signature}"`));
+  }
+  assert.match(html, /\.ledger\.collapsed \.ledger-body\{display:none\}/);
   assert.doesNotMatch(ledger, /statsPopup|Statistics/);
+});
+
+test('Ship log classifies unavoidable vertex sets, including the ocean face', () => {
+  assert.deepEqual(classifiedVertexCounts(), {
+    555: 0, 556: 1, 557: 0, 558: 0, 559: 0, 566: 0, 567: 1,
+  });
 });
 
 test('Ship log uses ocean-inclusive face counts and hides empty extended classes', () => {
@@ -1038,6 +1095,10 @@ test('Ship log uses ocean-inclusive face counts and hides empty extended classes
   assert.deepEqual(
     { vertices: values.sVertices, edges: values.sEdges, internalFaces: values.sInternal },
     { vertices: 19, edges: 31, internalFaces: 7 },
+  );
+  assert.deepEqual(
+    Object.fromEntries(['555','556','557','558','559','566','567'].map(type => [type, values['sV'+type]])),
+    { 555: 1, 556: 2, 557: 3, 558: 4, 559: 5, 566: 6, 567: 7 },
   );
   assert.deepEqual(hidden, { row2: true, row3: false, row4: false });
 });
@@ -1103,7 +1164,7 @@ test('category color popover toggles state and remembers a changed color', () =>
 test('vertex configurations use one accessible multi-select popover', () => {
   const control = html.match(/<div class="ctrl-group vertex-filter">[\s\S]*?<\/div>\s*<\/div>/)?.[0];
   assert.ok(control, 'vertex filter control not found');
-  assert.match(control, /<button id="vertexFilterToggle"[^>]*aria-haspopup="dialog"[^>]*aria-expanded="false"/);
+  assert.match(control, /<button id="vertexFilterToggle"[^>]*title="Unavoidable sets"[^>]*aria-haspopup="dialog"[^>]*aria-expanded="false"/);
   assert.match(control, /<div id="vertexFilterPopover"[^>]*role="dialog"[^>]*hidden>/);
   for(const signature of ['555','556','557','558','559','566','567']){
     assert.match(control, new RegExp(`data-signature="${signature}"[^>]*aria-pressed="false"[^>]*>${signature}<`));
@@ -1115,19 +1176,19 @@ test('vertex configuration popover keeps independent selections and closes on Es
   const state=exerciseVertexFilterPopover();
   assert.deepEqual(state.opened, {
     hidden:false, expanded:'true', active:false,
-    label:'Highlight vertex configurations', selected:[],
+    label:'Highlight vertex configurations', title:'Unavoidable sets', selected:[],
     pressed:{555:'false',556:'false',557:'false',558:'false',559:'false',566:'false',567:'false'},
     toggleFocuses:0,
   });
   assert.deepEqual(state.twoSelected, {
     hidden:false, expanded:'true', active:true,
-    label:'2 vertex configurations highlighted', selected:['555','567'],
+    label:'2 vertex configurations highlighted', title:'Unavoidable sets', selected:['555','567'],
     pressed:{555:'true',556:'false',557:'false',558:'false',559:'false',566:'false',567:'true'},
     toggleFocuses:0,
   });
   assert.deepEqual(state.oneSelected, {
     hidden:false, expanded:'true', active:true,
-    label:'1 vertex configuration highlighted', selected:['567'],
+    label:'1 vertex configuration highlighted', title:'Unavoidable sets', selected:['567'],
     pressed:{555:'false',556:'false',557:'false',558:'false',559:'false',566:'false',567:'true'},
     toggleFocuses:0,
   });
@@ -1139,14 +1200,22 @@ test('vertex configuration popover keeps independent selections and closes on Es
   assert.deepEqual(state.categoryPopoverStates,[null,null,null]);
 });
 
-test('selected vertex configurations render fixed-size gold markers on both hemispheres', () => {
-  assert.deepEqual(renderedVertexHighlights(['555','567']), [
+test('selected vertex configurations render gold markers on both hemispheres', () => {
+  assert.deepEqual(renderedVertexHighlights(['555','567'],8), [
     {x:30,y:40,r:3,alpha:0.28,color:'#D3A330'},
     {x:30,y:40,r:1.2,alpha:0.28,color:'#FFF6D6'},
     {x:10,y:20,r:3,alpha:1,color:'#D3A330'},
     {x:10,y:20,r:1.2,alpha:1,color:'#FFF6D6'},
   ]);
   assert.deepEqual(renderedVertexHighlights([]), []);
+});
+
+test('vertex markers grow smoothly from 3px to 6px as the map zooms in', () => {
+  const radii=zoom=>renderedVertexHighlights(['555'],zoom).map(mark=>mark.r);
+  assert.deepEqual(radii(1),[1.5,0.6]);
+  assert.deepEqual(radii(2),[2,0.8]);
+  assert.deepEqual(radii(4),[2.5,1]);
+  assert.deepEqual(radii(8),[3,1.2]);
 });
 
 test('vertex configuration selections survive growth, history navigation, and Restart', () => {
@@ -1199,19 +1268,23 @@ test('speed popover toggles, closes outside, and returns focus on Escape', () =>
   assert.equal(result.vertexPopoverCloses, 4);
 });
 
-test("Ship log toggle switches views and updates its hover and accessible name", () => {
+test("Ship log cycles from basic to extended to title-only and back", () => {
   assert.deepEqual(exerciseShipLogViewToggle(), {
     initial: {
-      expanded: false, ariaExpanded: 'false',
-      title: "Expand ship's log", ariaLabel: "Expand ship's log",
+      view: 'base', extended: false, collapsed: false,
+      title: "Show extended ship's log", ariaLabel: "Show extended ship's log",
     },
     expanded: {
-      expanded: true, ariaExpanded: 'true',
-      title: "Compact ship's log", ariaLabel: "Compact ship's log",
+      view: 'extended', extended: true, collapsed: false,
+      title: "Collapse ship's log", ariaLabel: "Collapse ship's log",
     },
-    compacted: {
-      expanded: false, ariaExpanded: 'false',
-      title: "Expand ship's log", ariaLabel: "Expand ship's log",
+    collapsed: {
+      view: 'collapsed', extended: false, collapsed: true,
+      title: "Show basic ship's log", ariaLabel: "Show basic ship's log",
+    },
+    basic: {
+      view: 'base', extended: false, collapsed: false,
+      title: "Show extended ship's log", ariaLabel: "Show extended ship's log",
     },
   });
 });
