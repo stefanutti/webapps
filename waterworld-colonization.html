@@ -29,13 +29,14 @@
   .row{display:flex;justify-content:space-between;gap:14px;font-size:12.5px;padding:3px 0;color:var(--foam)}
   .row .k{color:var(--foam-dim);white-space:nowrap}
   .row.hidden{display:none}   /* a diagnostic row only earns its line once it has something to say */
+  .ledger:not(.extended) .extended-only{display:none}
   .inv{margin-top:10px;padding-top:9px;border-top:1px solid var(--hairline);font-size:12px}
   .inv b{font-weight:400}
   .inv .ok{color:var(--ok)} .inv .bad{color:var(--bad)} .inv .warn{color:var(--warn)}
   .controls{bottom:24px;right:24px;display:flex;flex-wrap:wrap;align-items:center;
          justify-content:flex-end;gap:0;max-width:calc(100vw - 48px);padding:6px 8px}
   .ctrl-group{display:flex;align-items:center;gap:8px;padding:0 5px}
-  .ctrl-group.swatches{gap:5px}
+  .ctrl-group.swatches{position:relative;gap:5px}
   .close-option{display:inline-flex;align-items:center;cursor:pointer;user-select:none}
   .close-option input{width:15px;height:15px;accent-color:#8FC6DB;cursor:pointer}
   .close-option input:disabled{cursor:default}
@@ -58,14 +59,31 @@
   #speedPopover[hidden]{display:none}
   #speed{width:18px;height:112px;writing-mode:vertical-lr;direction:rtl;
          accent-color:#8FC6DB;background:transparent}
-  .stats-popup{position:absolute;top:calc(100% + 10px);right:0;width:290px;max-height:calc(100vh - 300px);
-               overflow:auto;padding:12px 14px;background:rgba(13,24,44,.94);border:1px solid var(--hairline);
-               border-radius:10px;box-shadow:0 12px 32px rgba(0,0,0,.32)}
-  .stats-popup[hidden]{display:none}
-  .stats-section+.stats-section{margin-top:12px;padding-top:10px;border-top:1px solid var(--hairline)}
-  .stats-section h3{font-family:Georgia,'Times New Roman',serif;font-size:13px;font-style:italic;
-                    font-weight:400;color:var(--foam-dim);margin-bottom:5px}
-  .stats-popup .row{font-size:11.5px;padding:2px 0}
+  .color-swatch{position:relative;width:26px;height:22px;padding:0;border-radius:5px;
+                background:var(--swatch-color);overflow:hidden}
+  .color-swatch.disabled{filter:saturate(.15);opacity:.7}
+  .color-swatch.disabled::after{content:"";position:absolute;left:3px;right:3px;top:50%;height:1.5px;
+                                background:var(--foam);transform:rotate(-45deg);box-shadow:0 0 2px var(--abyss)}
+  #colorPopover{position:absolute;bottom:calc(100% + 10px);left:50%;transform:translateX(-50%);
+                display:flex;align-items:center;gap:7px;padding:8px;background:var(--panel);
+                border:1px solid var(--hairline);border-radius:9px;backdrop-filter:blur(10px);
+                -webkit-backdrop-filter:blur(10px);box-shadow:0 8px 24px rgba(0,0,0,.28)}
+  #colorPopover[hidden]{display:none}
+  .ctrl-group.vertex-filter{position:relative}
+  #vertexFilterToggle{position:relative}
+  #vertexFilterToggle.active{background:rgba(211,163,48,.18);border-color:rgba(235,193,126,.72)}
+  #vertexFilterToggle.active::after{content:"";position:absolute;right:3px;top:3px;width:4px;height:4px;
+                                   border-radius:50%;background:#EBC17E}
+  #vertexFilterPopover{position:absolute;bottom:calc(100% + 10px);left:50%;transform:translateX(-50%);
+                       padding:8px;background:var(--panel);border:1px solid var(--hairline);
+                       border-radius:9px;backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);
+                       box-shadow:0 8px 24px rgba(0,0,0,.28)}
+  #vertexFilterPopover[hidden]{display:none}
+  .vertex-filter-options{display:grid;grid-template-columns:repeat(2,1fr);gap:5px}
+  .vertex-option{min-width:42px;padding:5px 8px;font-family:ui-monospace,'SF Mono',Menlo,Consolas,monospace;
+                 letter-spacing:.04em;justify-content:center}
+  .vertex-option[aria-pressed="true"]{color:#FFF4C9;background:rgba(211,163,48,.24);
+                                       border-color:rgba(235,193,126,.78)}
   input[type=color]{width:26px;height:22px;border:1px solid var(--hairline);border-radius:5px;
          background:transparent;padding:0;cursor:pointer}
   input[type=color]::-webkit-color-swatch-wrapper{padding:2px}
@@ -89,7 +107,6 @@
     .ledger h2{font-size:16px}
     .row{font-size:10.5px;padding:2px 0;gap:10px}
     .inv{font-size:9.5px;margin-top:6px;padding-top:6px}
-    .stats-popup{width:min(280px,calc(100vw - 28px));max-height:calc(100vh - 220px)}
     /* v16: the toolbar has to come out as ONE row on a phone — with the step controls included,
        fixed-size controls are tightened a little. The pace slider now lives in a vertical popover,
        so only its compact trigger participates in this row. */
@@ -98,7 +115,7 @@
     .ctrl-group{padding:0 4px;gap:5px}
     button{padding:6px 9px;font-size:11px}
     .icon-btn{padding:5px}
-    input[type=color]{width:22px;height:20px}
+    input[type=color],.color-swatch{width:22px;height:20px}
     .ctrl-group.swatches{gap:4px}
     #fullToast{bottom:150px}
     #closeToast{bottom:190px!important}
@@ -106,11 +123,11 @@
   }
   /* the narrowest phones still going (360 is the common floor, 320 the oldest): one more turn of the
      screw so the row holds there too, rather than dropping Export and Restart onto a line of their own */
-  @media (max-width:352px){
+  @media (max-width:360px){
     .controls{left:6px;right:6px;max-width:calc(100vw - 12px);padding:4px}
     .ctrl-group{padding:0 2px;gap:4px}
     .icon-btn{padding:4px}
-    input[type=color]{width:20px}
+    input[type=color],.color-swatch{width:20px}
   }
 </style>
 </head>
@@ -124,11 +141,11 @@
   than five neighbors is ever buried.</div>
 </div>
 
-<div class="panel ledger">
+<div class="panel ledger" id="shipLog">
   <div class="ledger-head">
     <h2>Ship's log</h2>
-    <button id="statsToggle" class="icon-btn" title="Statistics" aria-label="Open map statistics"
-            aria-expanded="false" aria-haspopup="dialog" aria-controls="statsPopup">
+    <button id="logViewToggle" class="icon-btn" title="Expand ship's log" aria-label="Expand ship's log"
+            aria-expanded="false">
       <svg class="ico-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
            stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">
         <line x1="5" y1="20" x2="5" y2="12"/>
@@ -139,33 +156,18 @@
   </div>
   <div class="row"><span class="k">Faces + Ocean</span><span id="sF">2</span></div>
   <div class="row"><span class="k">Coast C</span><span id="sC">2</span></div>
+  <div class="row extended-only hidden" id="row2"><span class="k">Digons F2</span><span id="s2">0</span></div>
+  <div class="row extended-only hidden" id="row3"><span class="k">Triangles F3</span><span id="s3">0</span></div>
+  <div class="row extended-only hidden" id="row4"><span class="k">Quadrilaterals F4</span><span id="s4">0</span></div>
   <div class="row"><span class="k">Pentagons F5</span><span id="s5">0</span></div>
   <div class="row"><span class="k">Hexagons F6</span><span id="s6">0</span></div>
   <div class="row"><span class="k">Wells n&gt;6</span><span id="sW">0</span></div>
+  <div class="row extended-only"><span class="k">Vertices</span><span id="sVertices">0</span></div>
+  <div class="row extended-only"><span class="k">Edges</span><span id="sEdges">0</span></div>
+  <div class="row extended-only"><span class="k">Internal faces</span><span id="sInternal">0</span></div>
   <div class="row"><span class="k">Largest face</span><span id="sMax">2</span></div>
   <div class="row hidden" id="rowFB"><span class="k">Fallback F3</span><span id="sFB">0</span></div>
   <div class="inv"><b>Σ(6−n)F<sub>n</sub> − C = <span id="sInv" class="ok">6 ✓</span></b></div>
-  <div id="statsPopup" class="stats-popup" role="dialog" aria-label="Map statistics" tabindex="-1" hidden>
-    <section class="stats-section">
-      <h3>Face distribution</h3>
-      <div id="faceDistribution"></div>
-    </section>
-    <section class="stats-section" id="topologyStatistics">
-      <h3>Topology</h3>
-      <div class="row"><span class="k">Vertices</span><span id="dVertices">0</span></div>
-      <div class="row"><span class="k">Edges</span><span id="dEdges">0</span></div>
-      <div class="row"><span class="k">Internal faces</span><span id="dInternal">0</span></div>
-      <div class="row"><span class="k">Ocean-facing faces</span><span id="dOceanFacing">0</span></div>
-    </section>
-    <section class="stats-section" id="measureStatistics">
-      <h3>Measures</h3>
-      <div class="row"><span class="k">Smallest face</span><span id="dMinimum">0</span></div>
-      <div class="row"><span class="k">Average face</span><span id="dAverage">0</span></div>
-      <div class="row"><span class="k">Largest face</span><span id="dMaximum">0</span></div>
-      <div class="row"><span class="k">Ocean degree</span><span id="dOceanDegree">0</span></div>
-      <div class="row"><span class="k">Fallback F3</span><span id="dFallbacks">0</span></div>
-    </section>
-  </div>
 </div>
 
 <div class="panel full-toast" id="fullToast">The island now fills the globe — press Restart to grow a new one.
@@ -200,8 +202,8 @@
         <polyline points="9 18 15 12 9 6"/>
       </svg>
     </button>
-    <label class="close-option" title="Maximize ocean">
-      <input id="maximizeOcean" type="checkbox" checked aria-label="Maximize ocean">
+    <label class="close-option" title="Keep the ocean as large as possible">
+      <input id="maximizeOcean" type="checkbox" checked aria-label="Keep the ocean as large as possible">
     </label>
   </div>
   <div class="ctrl-group pace">
@@ -209,9 +211,7 @@
             aria-expanded="false" aria-haspopup="dialog" aria-controls="speedPopover">
       <svg class="ico-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
            stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">
-        <path d="M4 15a8 8 0 1 1 16 0"/>
-        <line x1="12" y1="15" x2="17" y2="9"/>
-        <circle cx="12" cy="15" r="1"/>
+        <path d="M13 2 4 14h7l-1 8 9-12h-7z"/>
       </svg>
     </button>
     <div id="speedPopover" role="dialog" aria-label="Growth speed" hidden>
@@ -220,9 +220,48 @@
     </div>
   </div>
   <div class="ctrl-group swatches">
-    <input id="col5" type="color" value="#FF2E2E" title="Pentagons F5" aria-label="Color for faces with five sides">
-    <input id="col6" type="color" value="#22E04A" title="Hexagons F6" aria-label="Color for faces with six sides">
-    <input id="col7" type="color" value="#2E7DFF" title="Wells n&gt;6" aria-label="Color for faces with more than six sides">
+    <button id="col5" class="color-swatch" data-category="f5" aria-haspopup="dialog"
+            aria-controls="colorPopover" aria-expanded="false"></button>
+    <button id="col6" class="color-swatch" data-category="f6" aria-haspopup="dialog"
+            aria-controls="colorPopover" aria-expanded="false"></button>
+    <button id="col7" class="color-swatch" data-category="f7" aria-haspopup="dialog"
+            aria-controls="colorPopover" aria-expanded="false"></button>
+    <div id="colorPopover" role="dialog" aria-label="Category color settings" hidden>
+      <input id="categoryColorPicker" type="color" aria-label="Choose category color">
+      <button id="colorEnabledToggle" class="icon-btn" title="Disable category color"
+              aria-label="Disable category color" aria-pressed="true">
+        <svg class="ico-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+             stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">
+          <path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7S1 12 1 12z"/>
+          <circle cx="12" cy="12" r="3"/>
+          <line id="colorDisabledSlash" x1="4" y1="4" x2="20" y2="20" hidden/>
+        </svg>
+      </button>
+    </div>
+  </div>
+  <div class="ctrl-group vertex-filter">
+    <button id="vertexFilterToggle" class="icon-btn" title="Highlight vertex configurations"
+            aria-label="Highlight vertex configurations" aria-haspopup="dialog"
+            aria-controls="vertexFilterPopover" aria-expanded="false">
+      <svg class="ico-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+           stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">
+        <line x1="12" y1="12" x2="5" y2="5"/><line x1="12" y1="12" x2="19" y2="5"/>
+        <line x1="12" y1="12" x2="12" y2="21"/>
+        <circle cx="12" cy="12" r="2.5"/><circle cx="5" cy="5" r="1.5"/>
+        <circle cx="19" cy="5" r="1.5"/>
+      </svg>
+    </button>
+    <div id="vertexFilterPopover" role="dialog" aria-label="Vertex configurations" hidden>
+      <div class="vertex-filter-options" role="group" aria-label="Configurations to highlight">
+        <button class="vertex-option" data-signature="555" aria-pressed="false">555</button>
+        <button class="vertex-option" data-signature="556" aria-pressed="false">556</button>
+        <button class="vertex-option" data-signature="557" aria-pressed="false">557</button>
+        <button class="vertex-option" data-signature="558" aria-pressed="false">558</button>
+        <button class="vertex-option" data-signature="559" aria-pressed="false">559</button>
+        <button class="vertex-option" data-signature="566" aria-pressed="false">566</button>
+        <button class="vertex-option" data-signature="567" aria-pressed="false">567</button>
+      </div>
+    </div>
   </div>
   <div class="ctrl-group">
     <button id="btnExport" class="icon-btn" title="Export" aria-label="Save every face's vertex list to a JSON file">
@@ -501,6 +540,8 @@ let moveLog=[], logIdx=-1;        // v15: one snapshot per state, logIdx = where
    one the construction never buries, so in practice it only ever shows the undarkened shade.
    A face the user recolors by hand keeps that literal color (f.color) and opts out of the scheme. */
 const catColors={small:'#93C3E2', f5:'#FF2E2E', f6:'#22E04A', f7:'#2E7DFF'};
+const categoryColorEnabled={f5:true, f6:true, f7:true};
+const CATEGORY_LABELS={f5:'F5', f6:'F6', f7:'> F6'};
 const SEALED_SHADE=0.55;           // how far a sealed face's hue is dimmed towards black
 const OCEAN_WASH=0.24;             // v12: alpha of the ocean's category color over the globe
 const FAR_SIDE_WASH=0.22;          // v12: alpha of land seen through the globe from the far side
@@ -513,7 +554,8 @@ function shade(hex, k){
 function faceFill(f){
   if(f.color) return f.color;
   const cat=faceCategory(f);
-  return f.sealed ? shade(catColors[cat], SEALED_SHADE) : catColors[cat];
+  const color=cat!=='small' && !categoryColorEnabled[cat] ? catColors.small : catColors[cat];
+  return f.sealed ? shade(color, SEALED_SHADE) : color;
 }
 
 function reset(){
@@ -926,11 +968,7 @@ function largestFaceDegree(){
   for(const f of faces) if(f.n>largest) largest=f.n;
   return largest;
 }
-const FACE_COUNT_LABELS=[['f2','F2'],['f3','F3'],['f4','F4'],['f5','F5'],['f6','F6'],['above6','> F6']];
-function visibleFaceCountRows(counts){
-  return FACE_COUNT_LABELS.map(([key,label])=>[label,counts[key]]).filter(([,count])=>count>0);
-}
-function detailedStatistics(){
+function shipLogStatistics(){
   const degrees=faces.map(f=>f.n); degrees.push(coast.length);   // include the ocean everywhere
   const faceCounts={f2:0,f3:0,f4:0,f5:0,f6:0,above6:0};
   for(const n of degrees){
@@ -942,23 +980,29 @@ function detailedStatistics(){
   for(const f of faces) for(const v of f.vertices) vertexSet.add(v);
   for(const e of coast){ vertexSet.add(e.a); vertexSet.add(e.b); }
   const totalFaces=faces.length+1;
-  const degreeSum=degrees.reduce((sum,n)=>sum+n,0);
-  const oceanFacing=new Set(coast.map(e=>e.face));
   return {
     faceCounts,
     vertices:vertexSet.size,
     edges:Math.max(0,vertexSet.size+totalFaces-2),       // Euler: V - E + F = 2
-    internalFaces:faces.filter(f=>f.sealed).length,
-    oceanFacingFaces:oceanFacing.size,
-    minimumFaceDegree:Math.min(...degrees),
-    averageFaceDegree:degreeSum/degrees.length,
-    maximumFaceDegree:Math.max(...degrees),
-    oceanDegree:coast.length,
-    oceanPerimeter:perimeter(),
-    moves,
-    fallbacks:fallbackCount,
-    invariant:{valid:invOK,value:sumLand-coast.length}
+    internalFaces:faces.filter(f=>f.sealed).length
   };
+}
+function vertexConfigurations(){
+  const adjacent=new Map(), oceanFace={};
+  function add(vertex,face,degree){
+    let at=adjacent.get(vertex);
+    if(!at){ at=new Map(); adjacent.set(vertex,at); }
+    at.set(face,degree);
+  }
+  for(const f of faces) for(const vertex of f.vertices) add(vertex,f,f.n);
+  for(const edge of coast) add(edge.a,oceanFace,coast.length);
+  const result=[];
+  for(const [vertex,at] of adjacent){
+    if(at.size!==3) continue;
+    const degrees=[...at.values()].sort((a,b)=>a-b);
+    result.push({vertex,degrees,signature:degrees.join('')});
+  }
+  return result;
 }
 function setFull(){
   if(full) return;
@@ -1189,6 +1233,27 @@ let stars=[]; (function(){ for(let s=0;s<130;s++)
   stars.push({x:Math.random(),y:Math.random(),r:Math.random()*1.1+.3,a:Math.random()*.5+.15}); })();
 
 /* ---------- render ---------- */
+function drawVertexHighlights(){
+  if(selectedVertexConfigurations.size===0) return;
+  const near=[], far=[];
+  for(const item of vertexConfigurations()){
+    if(!selectedVertexConfigurations.has(item.signature)) continue;
+    const point={};
+    projTo(item.vertex,point);
+    (point.v ? near : far).push(point);
+  }
+  function marker(point,alpha){
+    ctx.save();
+    ctx.globalAlpha=alpha;
+    ctx.fillStyle='#D3A330';
+    ctx.beginPath(); ctx.arc(point.x,point.y,6/scale,0,7); ctx.fill();
+    ctx.fillStyle='#FFF6D6';
+    ctx.beginPath(); ctx.arc(point.x,point.y,2.4/scale,0,7); ctx.fill();
+    ctx.restore();
+  }
+  for(const point of far) marker(point,0.28);
+  for(const point of near) marker(point,1);
+}
 function draw(){
   computeScale();
   ctx.setTransform(DPR,0,0,DPR,0,0);
@@ -1317,6 +1382,7 @@ function draw(){
   ctx.strokeStyle='rgba(20,65,110,.26)'; ctx.lineWidth=2/scale;              ctx.stroke(CB);
   ctx.strokeStyle='rgba(40,110,165,.18)'; ctx.lineWidth=(6+9*emph)/scale;    ctx.stroke(CF);
   ctx.strokeStyle='rgba(0,0,0,.95)';      ctx.lineWidth=(1.9+3.4*emph)/scale; ctx.stroke(CF);
+  drawVertexHighlights();
 }
 
 /* ---------- v10: export every face's vertex list ----------
@@ -1373,20 +1439,119 @@ const maximizeOceanEl=document.getElementById('maximizeOcean');
 const btnPrev=document.getElementById('btnPrev');
 const btnNext=document.getElementById('btnNext');
 const btnExport=document.getElementById('btnExport');
-const statsToggle=document.getElementById('statsToggle');
-const statsPopup=document.getElementById('statsPopup');
-const faceDistribution=document.getElementById('faceDistribution');
+const shipLog=document.getElementById('shipLog');
+const logViewToggle=document.getElementById('logViewToggle');
 const speedToggle=document.getElementById('speedToggle');
 const speedPopover=document.getElementById('speedPopover');
 const speedEl=document.getElementById('speed');
 const fullToast=document.getElementById('fullToast');
 const closeToast=document.getElementById('closeToast');
 const regionColorPicker=document.getElementById('regionColorPicker');
-for(const [cat,id] of [['f5','col5'],['f6','col6'],['f7','col7']]){
-  const el=document.getElementById(id);
-  el.value=catColors[cat];
-  el.oninput=()=>{ catColors[cat]=el.value; };   // every face of that category repaints on the next frame
+const colorSwatches=new Map([
+  ['f5',document.getElementById('col5')],
+  ['f6',document.getElementById('col6')],
+  ['f7',document.getElementById('col7')],
+]);
+const colorPopover=document.getElementById('colorPopover');
+const categoryColorPicker=document.getElementById('categoryColorPicker');
+const colorEnabledToggle=document.getElementById('colorEnabledToggle');
+const colorDisabledSlash=document.getElementById('colorDisabledSlash');
+const vertexFilterToggle=document.getElementById('vertexFilterToggle');
+const vertexFilterPopover=document.getElementById('vertexFilterPopover');
+const vertexFilterOptions=[...document.querySelectorAll('.vertex-option')];
+const selectedVertexConfigurations=new Set();
+let activeColorCategory=null;
+function syncCategoryColorControl(cat){
+  const swatch=colorSwatches.get(cat), enabled=categoryColorEnabled[cat], label=CATEGORY_LABELS[cat];
+  swatch.style.backgroundColor=catColors[cat];
+  swatch.classList.toggle('disabled', !enabled);
+  swatch.title=label+' color settings ('+(enabled?'enabled':'disabled')+')';
+  swatch.setAttribute('aria-label', swatch.title);
+  if(cat!==activeColorCategory) return;
+  categoryColorPicker.value=catColors[cat];
+  categoryColorPicker.setAttribute('aria-label', 'Choose '+label+' color');
+  colorPopover.setAttribute('aria-label', label+' color settings');
+  const toggleLabel=(enabled?'Disable ':'Enable ')+label+' color';
+  colorEnabledToggle.title=toggleLabel;
+  colorEnabledToggle.setAttribute('aria-label', toggleLabel);
+  colorEnabledToggle.setAttribute('aria-pressed', String(enabled));
+  colorDisabledSlash.hidden=enabled;
 }
+function setCategoryColorPopover(cat){
+  activeColorCategory=cat;
+  colorPopover.hidden=cat===null;
+  for(const [key,swatch] of colorSwatches){
+    swatch.setAttribute('aria-expanded', String(key===cat));
+  }
+  if(cat!==null) syncCategoryColorControl(cat);
+}
+for(const [cat,swatch] of colorSwatches){
+  syncCategoryColorControl(cat);
+  swatch.onclick=e=>{
+    e.stopPropagation();
+    setSpeedPopover(false);
+    setVertexFilterPopover(false);
+    setCategoryColorPopover(activeColorCategory===cat ? null : cat);
+  };
+}
+categoryColorPicker.oninput=()=>{
+  if(activeColorCategory===null) return;
+  catColors[activeColorCategory]=categoryColorPicker.value;
+  syncCategoryColorControl(activeColorCategory);   // every face of that category repaints on the next frame
+};
+colorEnabledToggle.onclick=e=>{
+  e.stopPropagation();
+  if(activeColorCategory===null) return;
+  categoryColorEnabled[activeColorCategory]=!categoryColorEnabled[activeColorCategory];
+  syncCategoryColorControl(activeColorCategory);
+};
+colorPopover.onclick=e=>e.stopPropagation();
+addEventListener('click', ()=>setCategoryColorPopover(null));
+addEventListener('keydown', e=>{
+  if(e.key!=='Escape' || activeColorCategory===null) return;
+  const trigger=colorSwatches.get(activeColorCategory);
+  setCategoryColorPopover(null);
+  trigger.focus();
+});
+function setVertexFilterPopover(open){
+  vertexFilterPopover.hidden=!open;
+  vertexFilterToggle.setAttribute('aria-expanded', String(open));
+}
+function syncVertexFilterControls(){
+  for(const option of vertexFilterOptions){
+    option.setAttribute('aria-pressed', String(selectedVertexConfigurations.has(option.dataset.signature)));
+  }
+  const count=selectedVertexConfigurations.size;
+  const label=count===0 ? 'Highlight vertex configurations'
+    : count+' vertex configuration'+(count===1?'':'s')+' highlighted';
+  vertexFilterToggle.classList.toggle('active', count>0);
+  vertexFilterToggle.setAttribute('aria-label', label);
+  vertexFilterToggle.title=label;
+}
+syncVertexFilterControls();
+vertexFilterToggle.onclick=e=>{
+  e.stopPropagation();
+  const open=vertexFilterPopover.hidden;
+  setSpeedPopover(false);
+  setCategoryColorPopover(null);
+  setVertexFilterPopover(open);
+};
+for(const option of vertexFilterOptions){
+  option.onclick=e=>{
+    e.stopPropagation();
+    const signature=option.dataset.signature;
+    if(selectedVertexConfigurations.has(signature)) selectedVertexConfigurations.delete(signature);
+    else selectedVertexConfigurations.add(signature);
+    syncVertexFilterControls();
+  };
+}
+vertexFilterPopover.onclick=e=>e.stopPropagation();
+addEventListener('click', ()=>setVertexFilterPopover(false));
+addEventListener('keydown', e=>{
+  if(e.key!=='Escape' || vertexFilterPopover.hidden) return;
+  setVertexFilterPopover(false);
+  vertexFilterToggle.focus();
+});
 let pendingColorFace=null;
 regionColorPicker.oninput=()=>{ if(pendingColorFace) pendingColorFace.color=regionColorPicker.value; };
 function openColorPicker(f){
@@ -1429,31 +1594,26 @@ function setSpeedPopover(open){
   speedPopover.hidden=!open;
   speedToggle.setAttribute('aria-expanded', String(open));
 }
-function setStatsPopup(open){
-  statsPopup.hidden=!open;
-  statsToggle.setAttribute('aria-expanded', String(open));
-}
 speedToggle.onclick=e=>{
   e.stopPropagation();
   const open=speedPopover.hidden;
-  setStatsPopup(false);
+  setCategoryColorPopover(null);
+  setVertexFilterPopover(false);
   setSpeedPopover(open);
   if(open) speedEl.focus();
 };
 speedPopover.onclick=e=>e.stopPropagation();
 addEventListener('click', ()=>setSpeedPopover(false));
-statsToggle.onclick=e=>{
-  e.stopPropagation();
-  const open=statsPopup.hidden;
-  setSpeedPopover(false);
-  setStatsPopup(open);
-  if(open){ updateDetailedStatistics(); statsPopup.focus(); }
-};
-statsPopup.onclick=e=>e.stopPropagation();
-addEventListener('click', ()=>setStatsPopup(false));
+function setShipLogExpanded(expanded){
+  shipLog.classList.toggle('extended', expanded);
+  const label=expanded ? "Compact ship's log" : "Expand ship's log";
+  logViewToggle.setAttribute('aria-expanded', String(expanded));
+  logViewToggle.setAttribute('aria-label', label);
+  logViewToggle.title=label;
+}
+logViewToggle.onclick=()=>setShipLogExpanded(!shipLog.classList.contains('extended'));
 addEventListener('keydown', e=>{
   if(e.key==='Escape' && !speedPopover.hidden){ setSpeedPopover(false); speedToggle.focus(); return; }
-  if(e.key==='Escape' && !statsPopup.hidden){ setStatsPopup(false); statsToggle.focus(); return; }
   if(e.metaKey||e.ctrlKey||e.altKey) return;
   if(e.target instanceof HTMLInputElement) return;   // the pace slider owns the arrows while focused
   if(e.key==='ArrowLeft'){ e.preventDefault(); manualStep(true); }
@@ -1586,38 +1746,31 @@ canvas.addEventListener('dblclick', e=>{
 reset();
 
 let last=performance.now(), acc=0, statT=0;
-function updateDetailedStatistics(){
-  const s=detailedStatistics();
-  faceDistribution.innerHTML=visibleFaceCountRows(s.faceCounts)
-    .map(([label,count])=>'<div class="row"><span class="k">'+label+'</span><span>'+count+'</span></div>')
-    .join('');
-  document.getElementById('dVertices').textContent=s.vertices;
-  document.getElementById('dEdges').textContent=s.edges;
-  document.getElementById('dInternal').textContent=s.internalFaces;
-  document.getElementById('dOceanFacing').textContent=s.oceanFacingFaces;
-  document.getElementById('dMinimum').textContent=s.minimumFaceDegree;
-  document.getElementById('dAverage').textContent=s.averageFaceDegree.toFixed(2);
-  document.getElementById('dMaximum').textContent=s.maximumFaceDegree;
-  document.getElementById('dOceanDegree').textContent=s.oceanDegree;
-  document.getElementById('dFallbacks').textContent=s.fallbacks;
-}
 function updateStats(){
-  let f5=0,f6=0,w=0; for(const f of faces){ if(f.n===5)f5++; else if(f.n===6)f6++; else if(f.n>6)w++; }
+  const s=shipLogStatistics(), counts=s.faceCounts;
   document.getElementById('sF').textContent=faces.length+1;   // +1: the ocean is a face of the map too, and is never buried
   document.getElementById('sC').textContent=coast.length;
-  document.getElementById('s5').textContent=f5;
-  document.getElementById('s6').textContent=f6;
-  document.getElementById('sW').textContent=w;
+  for(const degree of [2,3,4]){
+    const count=counts['f'+degree];
+    document.getElementById('s'+degree).textContent=count;
+    document.getElementById('row'+degree).classList.toggle('hidden', count===0);
+  }
+  document.getElementById('s5').textContent=counts.f5;
+  document.getElementById('s6').textContent=counts.f6;
+  document.getElementById('sW').textContent=counts.above6;
+  document.getElementById('sVertices').textContent=s.vertices;
+  document.getElementById('sEdges').textContent=s.edges;
+  document.getElementById('sInternal').textContent=s.internalFaces;
   document.getElementById('sMax').textContent=largestFaceDegree();
   document.getElementById('sFB').textContent=fallbackCount;
   document.getElementById('rowFB').classList.toggle('hidden', fallbackCount===0);
   const el=document.getElementById('sInv');
   if(moves===0){ el.textContent='— only 1 land face'; el.className='warn'; }
   else{ el.textContent=invOK?'6 ✓':(sumLand-coast.length)+' ✗'; el.className=invOK?'ok':'bad'; }
-  if(!statsPopup.hidden) updateDetailedStatistics();
   syncControls();
 }
 const FRAME_BUDGET_MS = 14;   // max pace: no acc/dt throttling, just spend the frame stepping
+const ACCUMULATOR_EPSILON = 1e-9;
 function frame(now){
   const dt=Math.min(.1,(now-last)/1000); last=now;
   // v15: the automatic run advances through the same stepForward() the > button uses, so a run
@@ -1628,8 +1781,8 @@ function frame(now){
       while(running && performance.now()<deadline){ if(!stepForward()) break; }
       acc=0;
     } else {
-      acc+=dt*(+speedEl.value);
-      let n=0; while(running && acc>=1 && n<12){
+      acc+=dt*(+speedEl.value)*2;
+      let n=0; while(running && acc+ACCUMULATOR_EPSILON>=1 && n<12){
         acc-=1; if(!stepForward()) break; n++;
       }
     }

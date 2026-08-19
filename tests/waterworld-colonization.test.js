@@ -75,9 +75,9 @@ function measureLargestFace({ landDegrees, oceanDegree }) {
   return run();
 }
 
-function measureDetailedStatistics() {
+function measureShipLogStatistics() {
   const algorithm = growthAlgorithm();
-  assert.notEqual(algorithm.indexOf('function detailedStatistics()'), -1, 'detailed statistics not found');
+  assert.notEqual(algorithm.indexOf('function shipLogStatistics()'), -1, 'Ship log statistics not found');
 
   const run = new Function(`${algorithm}
     const points = [
@@ -101,16 +101,107 @@ function measureDetailedStatistics() {
       pts: [],
       face: faces[shoreIndexes[i]],
     }));
-    moves = 12;
-    fallbackCount = 3;
-    invOK = true;
-    sumLand = 12;
-    return { statistics: detailedStatistics(), visibleRows: visibleFaceCountRows({
-      f2: 0, f3: 2, f4: 0, f5: 4, f6: 0, above6: 1,
-    }) };
+    return shipLogStatistics();
   `);
 
   return run();
+}
+
+function categoryFillStates() {
+  const algorithm = growthAlgorithm();
+  assert.notEqual(
+    algorithm.indexOf('const categoryColorEnabled='),
+    -1,
+    'category color state not found',
+  );
+
+  const run = new Function(`${algorithm}
+    categoryColorEnabled.f5 = false;
+    const result = {
+      exposed: faceFill({ n: 5, sealed: false, color: null }),
+      sealed: faceFill({ n: 5, sealed: true, color: null }),
+      enabled: faceFill({ n: 6, sealed: false, color: null }),
+      custom: faceFill({ n: 5, sealed: false, color: '#123456' }),
+    };
+    catColors.f5 = '#123456';
+    categoryColorEnabled.f5 = true;
+    result.restored = faceFill({ n: 5, sealed: false, color: null });
+    return result;
+  `);
+
+  return run();
+}
+
+function classifiedVertexFixture() {
+  const algorithm = growthAlgorithm();
+  assert.notEqual(
+    algorithm.indexOf('function vertexConfigurations()'),
+    -1,
+    'vertex configuration classifier not found',
+  );
+
+  const run = new Function(`${algorithm}
+    const coastal={name:'coastal'}, internal={name:'internal'};
+    const shore=[coastal,{name:'s1'},{name:'s2'},{name:'s3'},{name:'s4'},{name:'s5'}];
+    const fillers=Array.from({length:12},(_,i)=>({name:'p'+i}));
+    faces=[
+      {n:7,vertices:[internal,...fillers.slice(0,6)]},
+      {n:5,vertices:[coastal,internal,...fillers.slice(6,9)]},
+      {n:6,vertices:[internal,...fillers.slice(0,5)]},
+      {n:5,vertices:[coastal,...fillers.slice(2,6)]},
+    ];
+    coast=shore.map((a,i)=>({a,b:shore[(i+1)%shore.length]}));
+    return vertexConfigurations()
+      .filter(item=>item.vertex===coastal || item.vertex===internal)
+      .map(item=>({name:item.vertex.name,degrees:item.degrees,signature:item.signature}))
+      .sort((a,b)=>a.name.localeCompare(b.name));
+  `);
+
+  return run();
+}
+
+function renderShipLogStatistics() {
+  const start = html.indexOf('function updateStats()');
+  const end = html.indexOf('\nconst FRAME_BUDGET_MS', start);
+  assert.notEqual(start, -1, 'Ship log update not found');
+  assert.notEqual(end, -1, 'Ship log update boundary not found');
+
+  const elements = Object.fromEntries([
+    'sF', 'sC', 's2', 's3', 's4', 's5', 's6', 'sW', 'sMax',
+    'sVertices', 'sEdges', 'sInternal', 'sFB', 'sInv',
+    'row2', 'row3', 'row4', 'rowFB',
+  ].map(id => [id, {
+    textContent: '',
+    className: '',
+    classes: {},
+    classList: { toggle(name, force) { elements[id].classes[name] = force; } },
+  }]));
+  const document = { getElementById: id => elements[id] };
+  const statistics = {
+    faceCounts: { f2: 0, f3: 2, f4: 1, f5: 2, f6: 0, above6: 1 },
+    vertices: 19,
+    edges: 31,
+    internalFaces: 7,
+  };
+  const faces = [{ n: 5 }];
+  const coast = new Array(5);
+
+  const run = new Function(
+    'document', 'elements', 'faces', 'coast', 'fallbackCount', 'moves', 'invOK', 'sumLand',
+    'shipLogStatistics', 'largestFaceDegree', 'syncControls',
+    `${html.slice(start, end)}
+      updateStats();
+      return {
+        values: Object.fromEntries(Object.entries(elements).map(([id, el]) => [id, el.textContent])),
+        hidden: Object.fromEntries(['row2', 'row3', 'row4'].map(id => [id, elements[id].classes.hidden])),
+      };
+    `,
+  );
+
+  return run(
+    document, elements, faces, coast, 0, 1, true, 11,
+    () => statistics, () => 5, () => {},
+  );
 }
 
 function seededMath(seed) {
@@ -306,27 +397,28 @@ function restoredCloseStrategy({ closingSnapshot, pendingPreference }) {
 }
 
 function exerciseSpeedPopover() {
-  const start = html.indexOf('function setSpeedPopover(open)');
-  const end = html.indexOf("document.getElementById('closeToastX')", start);
-  assert.notEqual(start, -1, 'speed popover handlers not found');
-  assert.notEqual(end, -1, 'speed popover handler boundary not found');
+  const functionStart = html.indexOf('function setSpeedPopover(open)');
+  const handlerStart = html.indexOf('speedToggle.onclick', functionStart);
+  const handlerEnd = html.indexOf('function setShipLogExpanded(expanded)', handlerStart);
+  const keydownStart = html.indexOf("addEventListener('keydown'", handlerEnd);
+  const keydownEnd = html.indexOf("document.getElementById('closeToastX')", keydownStart);
+  assert.notEqual(functionStart, -1, 'speed popover function not found');
+  assert.notEqual(handlerStart, -1, 'speed popover handlers not found');
+  assert.notEqual(handlerEnd, -1, 'speed popover handler boundary not found');
+  assert.notEqual(keydownStart, -1, 'keyboard handler not found');
+  assert.notEqual(keydownEnd, -1, 'keyboard handler boundary not found');
+  const source = html.slice(functionStart, handlerEnd)
+    + html.slice(keydownStart, keydownEnd);
 
   const run = new Function(
-    'speedToggle', 'speedPopover', 'speedEl', 'statsToggle', 'statsPopup', 'listeners',
-    'addEventListener', 'HTMLInputElement', 'manualStep', 'updateDetailedStatistics',
-    `${html.slice(start, end)}
+    'speedToggle', 'speedPopover', 'speedEl', 'listeners', 'addEventListener',
+    'HTMLInputElement', 'manualStep', 'setCategoryColorPopover', 'setVertexFilterPopover',
+    `${source}
       const speedState = () => ({
         hidden: speedPopover.hidden,
         expanded: speedToggle.attributes['aria-expanded'],
         sliderFocuses: speedEl.focuses,
         toggleFocuses: speedToggle.focuses,
-      });
-      const statsState = () => ({
-        hidden: statsPopup.hidden,
-        expanded: statsToggle.attributes['aria-expanded'],
-        popupFocuses: statsPopup.focuses,
-        toggleFocuses: statsToggle.focuses,
-        updates: statsPopup.updates,
       });
       const stopEvent = { stopPropagation() {} };
       speedToggle.onclick(stopEvent);
@@ -339,25 +431,10 @@ function exerciseSpeedPopover() {
       speedToggle.onclick(stopEvent);
       for (const handler of listeners.keydown) handler({ key: 'Escape' });
       const speedClosedByEscape = speedState();
-
-      statsToggle.onclick(stopEvent);
-      const statsOpened = statsState();
-      statsToggle.onclick(stopEvent);
-      const statsClosedByToggle = statsState();
-      statsToggle.onclick(stopEvent);
-      for (const handler of listeners.click) handler();
-      const statsClosedOutside = statsState();
-      statsToggle.onclick(stopEvent);
-      for (const handler of listeners.keydown) handler({ key: 'Escape' });
-      const statsClosedByEscape = statsState();
       return {
         speed: {
           opened: speedOpened, closedByToggle: speedClosedByToggle,
           closedOutside: speedClosedOutside, closedByEscape: speedClosedByEscape,
-        },
-        statistics: {
-          opened: statsOpened, closedByToggle: statsClosedByToggle,
-          closedOutside: statsClosedOutside, closedByEscape: statsClosedByEscape,
         },
       };
     `,
@@ -372,20 +449,288 @@ function exerciseSpeedPopover() {
   };
   const speedPopover = { hidden: true };
   const speedEl = { focuses: 0, focus() { this.focuses++; } };
-  const statsToggle = {
-    attributes: { 'aria-expanded': 'false' },
-    focuses: 0,
-    setAttribute(name, value) { this.attributes[name] = value; },
-    focus() { this.focuses++; },
-  };
-  const statsPopup = { hidden: true, focuses: 0, updates: 0, focus() { this.focuses++; } };
   const addEventListener = (type, handler) => { (listeners[type] ||= []).push(handler); };
-  const updateDetailedStatistics = () => { statsPopup.updates++; };
+  let categoryPopoverCloses = 0;
+  let vertexPopoverCloses = 0;
+  const setCategoryColorPopover = cat => { if(cat===null) categoryPopoverCloses++; };
+  const setVertexFilterPopover = open => { if(open===false) vertexPopoverCloses++; };
+
+  const result = run(
+    speedToggle, speedPopover, speedEl, listeners, addEventListener, class {}, () => {},
+    setCategoryColorPopover, setVertexFilterPopover,
+  );
+  result.categoryPopoverCloses=categoryPopoverCloses;
+  result.vertexPopoverCloses=vertexPopoverCloses;
+  return result;
+}
+
+function exerciseShipLogViewToggle() {
+  const start = html.indexOf('function setShipLogExpanded(expanded)');
+  const end = html.indexOf("\naddEventListener('keydown'", start);
+  assert.notEqual(start, -1, 'Ship log view toggle not found');
+  assert.notEqual(end, -1, 'Ship log view toggle boundary not found');
+
+  const shipLog = {
+    classes: new Set(),
+    classList: {
+      toggle(name, force) {
+        if (force) shipLog.classes.add(name); else shipLog.classes.delete(name);
+      },
+      contains(name) { return shipLog.classes.has(name); },
+    },
+  };
+  const logViewToggle = {
+    title: "Expand ship's log",
+    attributes: { 'aria-expanded': 'false', 'aria-label': "Expand ship's log" },
+    setAttribute(name, value) { this.attributes[name] = value; },
+  };
+  const run = new Function('shipLog', 'logViewToggle', `${html.slice(start, end)}
+    const state = () => ({
+      expanded: shipLog.classList.contains('extended'),
+      ariaExpanded: logViewToggle.attributes['aria-expanded'],
+      title: logViewToggle.title,
+      ariaLabel: logViewToggle.attributes['aria-label'],
+    });
+    const initial = state();
+    logViewToggle.onclick();
+    const expanded = state();
+    logViewToggle.onclick();
+    return { initial, expanded, compacted: state() };
+  `);
+
+  return run(shipLog, logViewToggle);
+}
+
+function exerciseCategoryColorPopover() {
+  const start = html.indexOf('function syncCategoryColorControl(cat)');
+  const end = html.indexOf('\nfunction setVertexFilterPopover(open)', start);
+  assert.notEqual(start, -1, 'category color controls not found');
+  assert.notEqual(end, -1, 'category color control boundary not found');
+
+  const makeButton = () => {
+    const classes = new Set();
+    return {
+      attributes: { 'aria-expanded': 'false' },
+      classList: {
+        toggle(name, force) { if(force) classes.add(name); else classes.delete(name); },
+        contains(name) { return classes.has(name); },
+      },
+      style: {}, title: '', focuses: 0,
+      setAttribute(name, value) { this.attributes[name] = value; },
+      focus() { this.focuses++; },
+    };
+  };
+  const colorSwatches = new Map([['f5', makeButton()], ['f6', makeButton()], ['f7', makeButton()]]);
+  const colorPopover = {
+    hidden: true, attributes: {},
+    setAttribute(name, value) { this.attributes[name] = value; },
+  };
+  const categoryColorPicker = { value: '', attributes: {}, setAttribute(name, value) { this.attributes[name] = value; } };
+  const colorEnabledToggle = { title: '', attributes: {}, setAttribute(name, value) { this.attributes[name] = value; } };
+  const colorDisabledSlash = { hidden: true };
+  const categoryColorEnabled = { f5: true, f6: true, f7: true };
+  const catColors = { small: '#93C3E2', f5: '#FF2E2E', f6: '#22E04A', f7: '#2E7DFF' };
+  const CATEGORY_LABELS = { f5: 'F5', f6: 'F6', f7: '> F6' };
+  const listeners = {};
+  const addEventListener = (type, handler) => { (listeners[type] ||= []).push(handler); };
+  const speedPopoverStates = [];
+  const vertexPopoverStates = [];
+  const setSpeedPopover = open => speedPopoverStates.push(open);
+  const setVertexFilterPopover = open => vertexPopoverStates.push(open);
+
+  const run = new Function(
+    'colorSwatches', 'colorPopover', 'categoryColorPicker', 'colorEnabledToggle',
+    'colorDisabledSlash', 'categoryColorEnabled', 'catColors', 'CATEGORY_LABELS',
+    'listeners', 'addEventListener', 'setSpeedPopover', 'setVertexFilterPopover',
+    'speedPopoverStates', 'vertexPopoverStates', 'activeColorCategory',
+    `${html.slice(start, end)}
+      const snapshot = cat => ({
+        activeColorCategory,
+        popoverHidden: colorPopover.hidden,
+        expanded: colorSwatches.get(cat).attributes['aria-expanded'],
+        disabled: colorSwatches.get(cat).classList.contains('disabled'),
+        swatchColor: colorSwatches.get(cat).style.backgroundColor,
+        toggleLabel: colorEnabledToggle.attributes['aria-label'],
+        togglePressed: colorEnabledToggle.attributes['aria-pressed'],
+        slashHidden: colorDisabledSlash.hidden,
+        pickerValue: categoryColorPicker.value,
+      });
+      const event = { stopPropagation() {} };
+      colorSwatches.get('f5').onclick(event);
+      const opened = snapshot('f5');
+      colorEnabledToggle.onclick(event);
+      const disabled = snapshot('f5');
+      categoryColorPicker.value = '#123456';
+      categoryColorPicker.oninput();
+      const recoloredWhileDisabled = snapshot('f5');
+      colorEnabledToggle.onclick(event);
+      const reenabled = snapshot('f5');
+      colorSwatches.get('f5').onclick(event);
+      const closed = snapshot('f5');
+      colorSwatches.get('f5').onclick(event);
+      for (const handler of listeners.keydown || []) handler({ key: 'Escape' });
+      const closedByEscape = {
+        ...snapshot('f5'),
+        swatchFocuses: colorSwatches.get('f5').focuses,
+      };
+      return {
+        opened, disabled, recoloredWhileDisabled, reenabled, closed, closedByEscape,
+        speedPopoverStates, vertexPopoverStates,
+      };
+    `,
+  );
 
   return run(
-    speedToggle, speedPopover, speedEl, statsToggle, statsPopup, listeners,
-    addEventListener, class {}, () => {}, updateDetailedStatistics,
+    colorSwatches, colorPopover, categoryColorPicker, colorEnabledToggle,
+    colorDisabledSlash, categoryColorEnabled, catColors, CATEGORY_LABELS,
+    listeners, addEventListener, setSpeedPopover, setVertexFilterPopover,
+    speedPopoverStates, vertexPopoverStates, null,
   );
+}
+
+function exerciseVertexFilterPopover() {
+  const start = html.indexOf('function setVertexFilterPopover(open)');
+  const end = html.indexOf('\nlet pendingColorFace', start);
+  assert.notEqual(start, -1, 'vertex filter controls not found');
+  assert.notEqual(end, -1, 'vertex filter control boundary not found');
+
+  const makeButton = signature => {
+    const classes = new Set();
+    return {
+      dataset: signature ? { signature } : {},
+      attributes: signature ? { 'aria-pressed': 'false' } : { 'aria-expanded': 'false' },
+      classList: {
+        toggle(name, force) { if(force) classes.add(name); else classes.delete(name); },
+        contains(name) { return classes.has(name); },
+      },
+      title: '', focuses: 0,
+      setAttribute(name, value) { this.attributes[name] = value; },
+      focus() { this.focuses++; },
+    };
+  };
+  const vertexFilterToggle = makeButton();
+  const vertexFilterPopover = { hidden: true };
+  const vertexFilterOptions = ['555','556','557','558','559','566','567'].map(makeButton);
+  const selectedVertexConfigurations = new Set();
+  const listeners = {};
+  const addEventListener = (type, handler) => { (listeners[type] ||= []).push(handler); };
+  const speedPopoverStates=[];
+  const categoryPopoverStates=[];
+  const setSpeedPopover = open => speedPopoverStates.push(open);
+  const setCategoryColorPopover = cat => categoryPopoverStates.push(cat);
+
+  const run = new Function(
+    'vertexFilterToggle', 'vertexFilterPopover', 'vertexFilterOptions',
+    'selectedVertexConfigurations', 'listeners', 'addEventListener',
+    'setSpeedPopover', 'setCategoryColorPopover', 'speedPopoverStates', 'categoryPopoverStates',
+    `${html.slice(start, end)}
+      const snapshot = () => ({
+        hidden: vertexFilterPopover.hidden,
+        expanded: vertexFilterToggle.attributes['aria-expanded'],
+        active: vertexFilterToggle.classList.contains('active'),
+        label: vertexFilterToggle.attributes['aria-label'],
+        selected: [...selectedVertexConfigurations],
+        pressed: Object.fromEntries(vertexFilterOptions.map(option=>[
+          option.dataset.signature, option.attributes['aria-pressed'],
+        ])),
+        toggleFocuses: vertexFilterToggle.focuses,
+      });
+      const event={stopPropagation(){}};
+      vertexFilterToggle.onclick(event);
+      const opened=snapshot();
+      vertexFilterOptions[0].onclick(event);
+      vertexFilterOptions[6].onclick(event);
+      const twoSelected=snapshot();
+      vertexFilterOptions[0].onclick(event);
+      const oneSelected=snapshot();
+      vertexFilterToggle.onclick(event);
+      vertexFilterToggle.onclick(event);
+      const reopened=snapshot();
+      for(const handler of listeners.keydown || []) handler({key:'Escape'});
+      return {
+        opened,twoSelected,oneSelected,reopened,closedByEscape:snapshot(),
+        speedPopoverStates,categoryPopoverStates,
+      };
+    `,
+  );
+
+  return run(
+    vertexFilterToggle, vertexFilterPopover, vertexFilterOptions,
+    selectedVertexConfigurations, listeners, addEventListener,
+    setSpeedPopover, setCategoryColorPopover, speedPopoverStates, categoryPopoverStates,
+  );
+}
+
+function renderedVertexHighlights(selectedSignatures) {
+  const start = html.indexOf('function drawVertexHighlights()');
+  const end = html.indexOf('\nfunction draw(){', start);
+  assert.notEqual(start, -1, 'vertex highlight renderer not found');
+  assert.notEqual(end, -1, 'vertex highlight renderer boundary not found');
+
+  const ctx = {
+    globalAlpha:1, fillStyle:'', current:[], marks:[], stack:[],
+    save(){ this.stack.push({globalAlpha:this.globalAlpha,fillStyle:this.fillStyle}); },
+    restore(){ Object.assign(this,this.stack.pop()); },
+    beginPath(){ this.current=[]; },
+    arc(x,y,r){ this.current.push({x,y,r}); },
+    fill(){
+      for(const arc of this.current){
+        this.marks.push({...arc,alpha:this.globalAlpha,color:this.fillStyle});
+      }
+    },
+  };
+  const configurations = [
+    {vertex:{x:10,y:20,v:true},signature:'555'},
+    {vertex:{x:30,y:40,v:false},signature:'567'},
+    {vertex:{x:50,y:60,v:true},signature:'556'},
+  ];
+  const run = new Function(
+    'ctx','scale','selectedVertexConfigurations','vertexConfigurations','projTo',
+    `${html.slice(start,end)}
+      drawVertexHighlights();
+      return ctx.marks;
+    `,
+  );
+  return run(
+    ctx, 2, new Set(selectedSignatures), () => configurations,
+    (vertex,out) => Object.assign(out,vertex),
+  );
+}
+
+function selectedConfigurationsAcrossLifecycle() {
+  const run = new Function('Math', `${historyAlgorithm()}
+    const btnRun={disabled:false,classList:{remove(){}}};
+    const btnClose={disabled:false,title:''};
+    const closeToast={classList:{add(){},remove(){}}};
+    const fullToast={classList:{add(){},remove(){}}};
+    const maximizeOceanEl={checked:true};
+    const selectedVertexConfigurations=new Set(['555','567']);
+    function setRunIcon(){}
+    function syncControls(){}
+    function hideFullToast(){}
+    const state=()=>[...selectedVertexConfigurations];
+
+    reset();
+    const afterInitialReset=state();
+    stepForward();
+    const afterGrowth=state();
+    stepBack();
+    const afterStepBack=state();
+    stepForward();
+    const afterStepForward=state();
+    reset();
+    return {afterInitialReset,afterGrowth,afterStepBack,afterStepForward,afterRestart:state()};
+  `);
+  return run(seededMath(11));
+}
+
+function narrowPhoneBreakpoint() {
+  const marker=html.indexOf('.icon-btn{padding:4px}');
+  assert.notEqual(marker,-1,'narrow-phone icon sizing not found');
+  const mediaStart=html.lastIndexOf('@media (max-width:',marker);
+  const match=html.slice(mediaStart,marker).match(/@media \(max-width:(\d+)px\)/);
+  assert.ok(match,'narrow-phone breakpoint not found');
+  return Number(match[1]);
 }
 
 function frameBatchCalls(speedValue) {
@@ -405,8 +750,37 @@ function frameBatchCalls(speedValue) {
     function updateStats() {}
     function requestAnimationFrame() {}
     const FRAME_BUDGET_MS = 14;
+    const ACCUMULATOR_EPSILON = 1e-9;
     ${html.slice(start, end)}
     frame(1000);
+    return calls;
+  `);
+
+  return run(speedValue);
+}
+
+function movesAcrossTenSeconds(speedValue) {
+  const start = html.indexOf('function frame(now){');
+  const end = html.indexOf('\nupdateStats();', start);
+  assert.notEqual(start, -1, 'animation frame not found');
+  assert.notEqual(end, -1, 'animation frame boundary not found');
+
+  const run = new Function('speedValue', `
+    let running = true, last = 0, acc = 0, statT = 0;
+    const speedEl = { value: speedValue, max: 40 };
+    let calls = 0;
+    const performance = { now() { return 0; } };
+    function canStepForward() { return true; }
+    function stepForward() { calls++; return true; }
+    function draw() {}
+    function updateStats() {}
+    function requestAnimationFrame() {}
+    const FRAME_BUDGET_MS = 14;
+    const ACCUMULATOR_EPSILON = 1e-9;
+    ${html.slice(start, end)}
+    for (let frameNumber = 1; frameNumber <= 600; frameNumber++) {
+      frame(frameNumber * 1000 / 60);
+    }
     return calls;
   `);
 
@@ -613,8 +987,8 @@ test('Ship log largest face still reports a larger land face', () => {
   assert.equal(measureLargestFace({ landDegrees: [5, 17, 11], oceanDegree: 14 }), 17);
 });
 
-test('detailed statistics include the ocean, topology, and measures', () => {
-  const { statistics } = measureDetailedStatistics();
+test('Ship log statistics include the ocean and topology', () => {
+  const statistics = measureShipLogStatistics();
 
   assert.deepEqual(statistics.faceCounts, {
     f2: 1, f3: 1, f4: 1, f5: 1, f6: 2, above6: 1,
@@ -622,51 +996,172 @@ test('detailed statistics include the ocean, topology, and measures', () => {
   assert.equal(statistics.vertices, 8);
   assert.equal(statistics.edges, 13);
   assert.equal(statistics.internalFaces, 2);
-  assert.equal(statistics.oceanFacingFaces, 4);
-  assert.equal(statistics.minimumFaceDegree, 2);
-  assert.ok(Math.abs(statistics.averageFaceDegree - 33 / 7) < 1e-12);
-  assert.equal(statistics.maximumFaceDegree, 7);
-  assert.equal(statistics.oceanDegree, 6);
-  assert.ok(Math.abs(statistics.oceanPerimeter - 6) < 1e-12);
-  assert.equal(statistics.moves, 12);
-  assert.equal(statistics.fallbacks, 3);
-  assert.deepEqual(statistics.invariant, { valid: true, value: 6 });
 });
 
-test('zero-valued face classes are omitted from detailed statistics', () => {
-  assert.deepEqual(measureDetailedStatistics().visibleRows, [
-    ['F3', 2], ['F5', 4], ['> F6', 1],
+test('disabled category colors use neutral blue without overriding custom face colors', () => {
+  assert.deepEqual(categoryFillStates(), {
+    exposed: '#93C3E2',
+    sealed: '#516b7c',
+    enabled: '#22E04A',
+    custom: '#123456',
+    restored: '#123456',
+  });
+});
+
+test('vertex configurations are sorted and include the ocean as an adjacent face', () => {
+  assert.deepEqual(classifiedVertexFixture(), [
+    { name: 'coastal', degrees: [5, 5, 6], signature: '556' },
+    { name: 'internal', degrees: [5, 6, 7], signature: '567' },
   ]);
 });
 
-test('Ship log exposes an accessible statistics popup', () => {
-  const ledger = html.match(/<div class="panel ledger">[\s\S]*?<\/div>\s*<\/div>/)?.[0];
+test('Ship log exposes compact and extended inline views', () => {
+  const ledger = html.match(/<div class="panel ledger"[^>]*>[\s\S]*?<\/div>\s*<\/div>/)?.[0];
   assert.ok(ledger, 'Ship log panel not found');
-  assert.match(ledger, /<button id="statsToggle"[^>]*aria-expanded="false"[^>]*aria-haspopup="dialog"/);
-  assert.match(ledger, /<div id="statsPopup"[^>]*role="dialog"[^>]*hidden>/);
-  assert.match(ledger, /id="faceDistribution"/);
-  assert.match(ledger, /id="topologyStatistics"/);
-  assert.match(ledger, /id="measureStatistics"/);
+  assert.match(ledger, /id="shipLog"/);
+  assert.match(ledger, /<button id="logViewToggle"[^>]*title="Expand ship's log"[^>]*aria-label="Expand ship's log"[^>]*aria-expanded="false"/);
+  assert.match(ledger, /class="[^"]*extended-only[^"]*" id="row2"/);
+  assert.match(ledger, /class="[^"]*extended-only[^"]*" id="row3"/);
+  assert.match(ledger, /class="[^"]*extended-only[^"]*" id="row4"/);
+  assert.match(ledger, /id="sVertices"/);
+  assert.match(ledger, /id="sEdges"/);
+  assert.match(ledger, /id="sInternal"/);
+  assert.doesNotMatch(ledger, /statsPopup|Statistics/);
 });
 
-test('statistics popup omits ocean perimeter, moves, and invariant', () => {
-  const start = html.indexOf('<div id="statsPopup"');
-  const end = html.indexOf('\n</div>\n\n<div class="panel full-toast"', start);
-  assert.notEqual(start, -1, 'statistics popup not found');
-  assert.notEqual(end, -1, 'statistics popup boundary not found');
-  const popup = html.slice(start, end);
-  assert.doesNotMatch(popup, /Ocean perimeter|id="dOceanPerimeter"/);
-  assert.doesNotMatch(popup, />Moves<|id="dMoves"/);
-  assert.doesNotMatch(popup, />Invariant<|id="dInvariant"/);
+test('Ship log uses ocean-inclusive face counts and hides empty extended classes', () => {
+  const { values, hidden } = renderShipLogStatistics();
+  assert.deepEqual(
+    { f2: values.s2, f3: values.s3, f4: values.s4, f5: values.s5, f6: values.s6, above6: values.sW },
+    { f2: 0, f3: 2, f4: 1, f5: 2, f6: 0, above6: 1 },
+  );
+  assert.deepEqual(
+    { vertices: values.sVertices, edges: values.sEdges, internalFaces: values.sInternal },
+    { vertices: 19, edges: 31, internalFaces: 7 },
+  );
+  assert.deepEqual(hidden, { row2: true, row3: false, row4: false });
 });
 
-test('controls expose a checked icon-only Maximize ocean flag', () => {
+test('controls explain the checked ocean-closing preference', () => {
   const label = html.match(/<label class="close-option"[\s\S]*?<\/label>/)?.[0];
 
   assert.ok(label, 'ocean strategy control not found');
-  assert.match(label, /title="Maximize ocean"/);
-  assert.match(label, /<input id="maximizeOcean" type="checkbox" checked aria-label="Maximize ocean">/);
+  assert.match(label, /title="Keep the ocean as large as possible"/);
+  assert.match(label, /<input id="maximizeOcean" type="checkbox" checked aria-label="Keep the ocean as large as possible">/);
   assert.doesNotMatch(label, /<span>/);
+});
+
+test('category swatches share one color-settings popover without extra checkboxes', () => {
+  const controls = html.match(/<div class="ctrl-group swatches">[\s\S]*?<\/div>\s*<\/div>/)?.[0];
+  assert.ok(controls, 'category color controls not found');
+  assert.match(controls, /<button[^>]*data-category="f5"/);
+  assert.match(controls, /<button[^>]*data-category="f6"/);
+  assert.match(controls, /<button[^>]*data-category="f7"/);
+  assert.match(controls, /<div id="colorPopover"[^>]*role="dialog"[^>]*hidden>/);
+  assert.match(controls, /<input id="categoryColorPicker" type="color"/);
+  assert.match(controls, /<button id="colorEnabledToggle"/);
+  assert.doesNotMatch(controls, /type="checkbox"/);
+});
+
+test('category color popover toggles state and remembers a changed color', () => {
+  assert.deepEqual(exerciseCategoryColorPopover(), {
+    opened: {
+      activeColorCategory: 'f5', popoverHidden: false, expanded: 'true', disabled: false,
+      swatchColor: '#FF2E2E', toggleLabel: 'Disable F5 color', togglePressed: 'true',
+      slashHidden: true, pickerValue: '#FF2E2E',
+    },
+    disabled: {
+      activeColorCategory: 'f5', popoverHidden: false, expanded: 'true', disabled: true,
+      swatchColor: '#FF2E2E', toggleLabel: 'Enable F5 color', togglePressed: 'false',
+      slashHidden: false, pickerValue: '#FF2E2E',
+    },
+    recoloredWhileDisabled: {
+      activeColorCategory: 'f5', popoverHidden: false, expanded: 'true', disabled: true,
+      swatchColor: '#123456', toggleLabel: 'Enable F5 color', togglePressed: 'false',
+      slashHidden: false, pickerValue: '#123456',
+    },
+    reenabled: {
+      activeColorCategory: 'f5', popoverHidden: false, expanded: 'true', disabled: false,
+      swatchColor: '#123456', toggleLabel: 'Disable F5 color', togglePressed: 'true',
+      slashHidden: true, pickerValue: '#123456',
+    },
+    closed: {
+      activeColorCategory: null, popoverHidden: true, expanded: 'false', disabled: false,
+      swatchColor: '#123456', toggleLabel: 'Disable F5 color', togglePressed: 'true',
+      slashHidden: true, pickerValue: '#123456',
+    },
+    closedByEscape: {
+      activeColorCategory: null, popoverHidden: true, expanded: 'false', disabled: false,
+      swatchColor: '#123456', toggleLabel: 'Disable F5 color', togglePressed: 'true',
+      slashHidden: true, pickerValue: '#123456', swatchFocuses: 1,
+    },
+    speedPopoverStates: [false, false, false],
+    vertexPopoverStates: [false, false, false],
+  });
+});
+
+test('vertex configurations use one accessible multi-select popover', () => {
+  const control = html.match(/<div class="ctrl-group vertex-filter">[\s\S]*?<\/div>\s*<\/div>/)?.[0];
+  assert.ok(control, 'vertex filter control not found');
+  assert.match(control, /<button id="vertexFilterToggle"[^>]*aria-haspopup="dialog"[^>]*aria-expanded="false"/);
+  assert.match(control, /<div id="vertexFilterPopover"[^>]*role="dialog"[^>]*hidden>/);
+  for(const signature of ['555','556','557','558','559','566','567']){
+    assert.match(control, new RegExp(`data-signature="${signature}"[^>]*aria-pressed="false"[^>]*>${signature}<`));
+  }
+  assert.doesNotMatch(control, /type="checkbox"|<select/);
+});
+
+test('vertex configuration popover keeps independent selections and closes on Escape', () => {
+  const state=exerciseVertexFilterPopover();
+  assert.deepEqual(state.opened, {
+    hidden:false, expanded:'true', active:false,
+    label:'Highlight vertex configurations', selected:[],
+    pressed:{555:'false',556:'false',557:'false',558:'false',559:'false',566:'false',567:'false'},
+    toggleFocuses:0,
+  });
+  assert.deepEqual(state.twoSelected, {
+    hidden:false, expanded:'true', active:true,
+    label:'2 vertex configurations highlighted', selected:['555','567'],
+    pressed:{555:'true',556:'false',557:'false',558:'false',559:'false',566:'false',567:'true'},
+    toggleFocuses:0,
+  });
+  assert.deepEqual(state.oneSelected, {
+    hidden:false, expanded:'true', active:true,
+    label:'1 vertex configuration highlighted', selected:['567'],
+    pressed:{555:'false',556:'false',557:'false',558:'false',559:'false',566:'false',567:'true'},
+    toggleFocuses:0,
+  });
+  assert.deepEqual(state.reopened, state.oneSelected);
+  assert.deepEqual(state.closedByEscape, {
+    ...state.oneSelected, hidden:true, expanded:'false', toggleFocuses:1,
+  });
+  assert.deepEqual(state.speedPopoverStates,[false,false,false]);
+  assert.deepEqual(state.categoryPopoverStates,[null,null,null]);
+});
+
+test('selected vertex configurations render fixed-size gold markers on both hemispheres', () => {
+  assert.deepEqual(renderedVertexHighlights(['555','567']), [
+    {x:30,y:40,r:3,alpha:0.28,color:'#D3A330'},
+    {x:30,y:40,r:1.2,alpha:0.28,color:'#FFF6D6'},
+    {x:10,y:20,r:3,alpha:1,color:'#D3A330'},
+    {x:10,y:20,r:1.2,alpha:1,color:'#FFF6D6'},
+  ]);
+  assert.deepEqual(renderedVertexHighlights([]), []);
+});
+
+test('vertex configuration selections survive growth, history navigation, and Restart', () => {
+  const selected=['555','567'];
+  assert.deepEqual(selectedConfigurationsAcrossLifecycle(), {
+    afterInitialReset:selected,
+    afterGrowth:selected,
+    afterStepBack:selected,
+    afterStepForward:selected,
+    afterRestart:selected,
+  });
+});
+
+test('the tightened phone toolbar breakpoint includes a 360px viewport', () => {
+  assert.ok(narrowPhoneBreakpoint()>=360);
 });
 
 test('primary controls are ordered Previous, Play, Close, Next', () => {
@@ -683,6 +1178,8 @@ test('speed control opens as a hidden vertical popover', () => {
   const control = html.match(/<div class="ctrl-group pace">[\s\S]*?<\/div>\s*<\/div>/)?.[0];
   assert.ok(control, 'speed popover control not found');
   assert.match(control, /<button id="speedToggle"[^>]*aria-expanded="false"[^>]*>/);
+  assert.match(control, /<path d="M13 2 4 14h7l-1 8 9-12h-7z"\/>/);
+  assert.doesNotMatch(control, /<circle/);
   assert.match(control, /aria-haspopup="dialog"/);
   assert.match(control, /<div id="speedPopover"[^>]*hidden>/);
   assert.match(control, /<input id="speed" type="range"[^>]*aria-orientation="vertical"/);
@@ -691,25 +1188,43 @@ test('speed control opens as a hidden vertical popover', () => {
 });
 
 test('speed popover toggles, closes outside, and returns focus on Escape', () => {
-  assert.deepEqual(exerciseSpeedPopover().speed, {
+  const result=exerciseSpeedPopover();
+  assert.deepEqual(result.speed, {
     opened: { hidden: false, expanded: 'true', sliderFocuses: 1, toggleFocuses: 0 },
     closedByToggle: { hidden: true, expanded: 'false', sliderFocuses: 1, toggleFocuses: 0 },
     closedOutside: { hidden: true, expanded: 'false', sliderFocuses: 2, toggleFocuses: 0 },
     closedByEscape: { hidden: true, expanded: 'false', sliderFocuses: 3, toggleFocuses: 1 },
   });
+  assert.equal(result.categoryPopoverCloses, 4);
+  assert.equal(result.vertexPopoverCloses, 4);
 });
 
-test('statistics popup toggles, refreshes, closes outside, and returns focus on Escape', () => {
-  assert.deepEqual(exerciseSpeedPopover().statistics, {
-    opened: { hidden: false, expanded: 'true', popupFocuses: 1, toggleFocuses: 0, updates: 1 },
-    closedByToggle: { hidden: true, expanded: 'false', popupFocuses: 1, toggleFocuses: 0, updates: 1 },
-    closedOutside: { hidden: true, expanded: 'false', popupFocuses: 2, toggleFocuses: 0, updates: 2 },
-    closedByEscape: { hidden: true, expanded: 'false', popupFocuses: 3, toggleFocuses: 1, updates: 3 },
+test("Ship log toggle switches views and updates its hover and accessible name", () => {
+  assert.deepEqual(exerciseShipLogViewToggle(), {
+    initial: {
+      expanded: false, ariaExpanded: 'false',
+      title: "Expand ship's log", ariaLabel: "Expand ship's log",
+    },
+    expanded: {
+      expanded: true, ariaExpanded: 'true',
+      title: "Compact ship's log", ariaLabel: "Compact ship's log",
+    },
+    compacted: {
+      expanded: false, ariaExpanded: 'false',
+      title: "Expand ship's log", ariaLabel: "Expand ship's log",
+    },
   });
 });
 
 test('a frame stops batching as soon as closing stops the run', () => {
   assert.deepEqual([frameBatchCalls(40), frameBatchCalls(39)], [1, 1]);
+});
+
+test('non-maximum speed stays linear at twice the slider value', () => {
+  assert.deepEqual(
+    [movesAcrossTenSeconds(1), movesAcrossTenSeconds(7), movesAcrossTenSeconds(39)],
+    [20, 140, 780],
+  );
 });
 
 test('two touch pointers pinch without rotating the globe', () => {
