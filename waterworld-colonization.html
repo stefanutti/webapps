@@ -62,7 +62,8 @@
   #speed{width:18px;height:112px;writing-mode:vertical-lr;direction:rtl;
          accent-color:#8FC6DB;background:transparent}
   .color-swatch{position:relative;width:26px;height:22px;padding:0;border-radius:5px;
-                background:var(--swatch-color);overflow:hidden}
+                background:var(--swatch-color);overflow:hidden;justify-content:center;
+                color:white;font-weight:700;letter-spacing:0;text-shadow:0 1px 3px #000,0 0 2px #000}
   .color-swatch.disabled{filter:saturate(.15);opacity:.7}
   .color-swatch.disabled::after{content:"";position:absolute;left:3px;right:3px;top:50%;height:1.5px;
                                 background:var(--foam);transform:rotate(-45deg);box-shadow:0 0 2px var(--abyss)}
@@ -239,11 +240,11 @@
   </div>
   <div class="ctrl-group swatches">
     <button id="col5" class="color-swatch" data-category="f5" aria-haspopup="dialog"
-            aria-controls="colorPopover" aria-expanded="false"></button>
+            aria-controls="colorPopover" aria-expanded="false">5</button>
     <button id="col6" class="color-swatch" data-category="f6" aria-haspopup="dialog"
-            aria-controls="colorPopover" aria-expanded="false"></button>
+            aria-controls="colorPopover" aria-expanded="false">6</button>
     <button id="col7" class="color-swatch" data-category="f7" aria-haspopup="dialog"
-            aria-controls="colorPopover" aria-expanded="false"></button>
+            aria-controls="colorPopover" aria-expanded="false">&gt;6</button>
     <div id="colorPopover" role="dialog" aria-label="Category color settings" hidden>
       <input id="categoryColorPicker" type="color" aria-label="Choose category color">
       <button id="colorEnabledToggle" class="icon-btn" title="Disable category color"
@@ -862,6 +863,23 @@ function doMove(){
 }
 
 /* ---------- v6: "Close map" — promote every small face; the ocean is never buried ---------- */
+/* A standard insertion splits two distinct coast edges, adding two cubic vertices.
+   C' = C+1-k and n = k+3, hence C'=5 forces k=C-4 and n=C-1.
+   Every legal single-face insertion of this type has that same maximal degree.
+   Endpoint faces gain one side each (two if identical); other faces cannot improve.
+   Plan without mutation, rejecting any small face that would remain anywhere. */
+function closeF5Candidate(){
+  const C=coast.length, k=C-4;
+  if(C<6) return {index:-1, reason:'Close F5 needs an ocean with at least 6 sides to add a face of at least 5 sides.'};
+  const deficient=faces.filter(f=>f.n<5);
+  if(deficient.length<=2){
+    for(let i=0;i<C;i++){
+      const a=coast[i].face, b=coast[(i+k+1)%C].face;
+      if(deficient.every(f=>f.n+Number(f===a)+Number(f===b)>=5)) return {index:i,k};
+    }
+  }
+  return {index:-1, reason:'Close F5 cannot leave every face with at least 5 sides. Use Close map first.'};
+}
 function pickInsertionIndex(){   /* k=0 endpoints are coast[i] and coast[i+1]: aim both at deficient faces */
   const C=coast.length; let best=0, bs=-1;
   for(let x=0;x<C;x++){
@@ -1607,6 +1625,12 @@ function syncControls(){
   btnPrev.disabled = logIdx<=0;
   btnNext.disabled = !canStepForward();
   maximizeOceanEl.disabled = closing;
+  const f5=closeDone ? closeF5Candidate() : null;
+  btnClose.disabled=closing || moves===0 || (closeDone && f5.index<0);
+  btnClose.title=closing ? 'Closing…' : closeDone ? f5.reason ||
+    `Close F5: add a face with ${coast.length-1} sides leaving a pentagonal ocean` : 'Close map';
+  btnClose.setAttribute('aria-label', closeDone || closing ? btnClose.title :
+    'Promote every small face and complete the map; the ocean stays open');
 }
 function manualStep(back){
   running=false;
@@ -1655,6 +1679,7 @@ document.getElementById('closeToastX').onclick=()=>{ clearTimeout(closeToastTime
 document.getElementById('fullToastX').onclick=hideFullToast;   // dismissing it early doesn't re-arm it
 btnClose.onclick=()=>{
   if(closing || moves===0) return;
+  if(closeDone){ closeToF5(); return; }
   dropFuture();                        // v15: closing replaces whatever growth was recorded ahead
   closingMaximizeOcean=maximizeOceanEl.checked;
   closeDone=false;                     // allow re-closing later if growth reintroduces small faces
@@ -1664,6 +1689,19 @@ btnClose.onclick=()=>{
   closeToast.classList.remove('show');
   btnClose.disabled=true; btnClose.title='Closing…';
 };
+function closeToF5(){
+  if(closing || !closeDone) return;
+  const candidate=closeF5Candidate();
+  if(candidate.index<0) return;
+  dropFuture();
+  execStandardMove(candidate.index,candidate.k);
+  finishClose();
+  moveLog.push(snapshot());
+  if(moveLog.length>LOG_MAX) moveLog.shift();
+  logIdx=moveLog.length-1;
+  updateStats();
+  syncControls();
+}
 btnExport.onclick=()=>exportVerticesFile();
 
 /* ---------- camera interaction: drag to orbit, scroll/pinch to zoom ---------- */

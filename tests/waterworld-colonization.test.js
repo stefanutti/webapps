@@ -1434,3 +1434,101 @@ test('explicit growth from a completed closure invalidates the closed state', ()
   assert.ok(explicitResume.faceCount > terminal.faceCount);
   assert.ok(explicitResume.moves > terminal.moves);
 });
+
+test('Close F5 adds one maximal face and preserves a cubic sphere map', () => {
+  assert.ok(growthAlgorithm().includes('function closeF5Candidate()'), 'Close F5 planner missing');
+  for (const seed of [1, 7, 29]) {
+    const result = new Function('Math', `${growthAlgorithm()}
+      const btnRun={classList:{remove(){}}}, btnClose={};
+      const closeToast={classList:{add(){},remove(){}}};
+      function setRunIcon(){} function resetLog(){} function syncControls(){} function hideFullToast(){}
+      reset();
+      for(let s=0;s<240;s++) attemptMove();
+      while(!tryPromotionMove(true)){}
+      const before=coast.length, count=faces.length;
+      const candidate=closeF5Candidate();
+      execStandardMove(candidate.index,candidate.k);
+      const ids=new Map(), edges=new Map();
+      for(const cycle of [...faces.map(f=>f.vertices),coast.map(e=>e.a).reverse()]){
+        for(let j=0;j<cycle.length;j++){
+          const a=cycle[j],b=cycle[(j+1)%cycle.length];
+          for(const v of [a,b]) if(!ids.has(v)) ids.set(v,ids.size);
+          const key=[ids.get(a),ids.get(b)].sort((x,y)=>x-y).join(':');
+          edges.set(key,(edges.get(key)||0)+1);
+        }
+      }
+      const degrees=new Map();
+      for(const key of edges.keys()) for(const v of key.split(':')) degrees.set(v,(degrees.get(v)||0)+1);
+      return {before,added:faces.length-count,n:faces.at(-1).n,ocean:coast.length,
+        safe:faces.every(f=>f.n>=5 && f.vertices.length===f.n),invOK,
+        euler:ids.size-edges.size+faces.length+1,
+        paired:[...edges.values()].every(n=>n===2), cubic:[...degrees.values()].every(n=>n===3)};
+    `)(seededMath(seed));
+    assert.equal(result.added,1);
+    assert.equal(result.n,result.before-1);
+    assert.equal(result.ocean,5);
+    assert.equal(result.safe,true);
+    assert.equal(result.invOK,true);
+    assert.equal(result.euler,2);
+    assert.equal(result.paired,true);
+    assert.equal(result.cubic,true);
+  }
+});
+
+test('Close F5 planning rejects impossible maps unchanged and counts both endpoint promotions', () => {
+  assert.ok(growthAlgorithm().includes('function closeF5Candidate()'), 'Close F5 planner missing');
+  const run=new Function(`${growthAlgorithm()}
+    const a={n:3},b={n:5}; faces=[a,b];
+    coast=[a,b,b,a,b,b,b,b].map(face=>({face}));
+    const before=JSON.stringify({faces,coast});
+    const possible=closeF5Candidate();
+    const unchanged=before===JSON.stringify({faces,coast});
+    a.n=2; const impossible=closeF5Candidate();
+    a.n=5; coast.length=5; const tooSmall=closeF5Candidate();
+    return {possible,unchanged,impossible,tooSmall};
+  `);
+  const result=run();
+  assert.equal(result.possible.k,4);
+  assert.equal(result.unchanged,true);
+  assert.equal(result.impossible.index,-1);
+  assert.equal(result.tooSmall.index,-1);
+});
+
+test('Close first completes normally, then adds one undoable F5 closure', () => {
+  const start=html.indexOf('btnClose.onclick=');
+  const end=html.indexOf('btnExport.onclick=',start);
+  assert.ok(start>=0);
+  const result=new Function('Math', `${historyAlgorithm()}
+    const btnRun={classList:{remove(){}}},btnClose={};
+    const closeToast={classList:{add(){},remove(){}}},maximizeOceanEl={checked:true};
+    function setRunIcon(){} function syncControls(){} function hideFullToast(){} function updateStats(){}
+    ${html.slice(start,end)}
+    reset();
+    const initial=JSON.stringify(snapshot());
+    btnClose.onclick();
+    const rejectedUnchanged=initial===JSON.stringify(snapshot()) && moveLog.length===1;
+    for(let s=0;s<240;s++) attemptMove();
+    const countBefore=faces.length;
+    btnClose.onclick();
+    const firstClickStartsNormal=closing && running && !closeDone && faces.length===countBefore;
+    while(!closeDone) closeStep();
+    clearTimeout(closeToastTimer);
+    const firstOcean=coast.length;
+    resetLog();
+    const before=JSON.stringify(snapshot());
+    btnClose.onclick();
+    clearTimeout(closeToastTimer);
+    const after=JSON.stringify(snapshot());
+    const terminal={ocean:coast.length,done:closeDone,running,logLength:moveLog.length};
+    stepBack();
+    const undo=before===JSON.stringify(snapshot());
+    stepForward();
+    const redo=after===JSON.stringify(snapshot());
+    btnClose.onclick();
+    return {firstClickStartsNormal,firstOceanLarge:firstOcean>5,rejectedUnchanged,terminal,undo,redo,repeatedUnchanged:after===JSON.stringify(snapshot())};
+  `)(seededMath(7));
+  assert.deepEqual(result,{
+    firstClickStartsNormal:true,firstOceanLarge:true,rejectedUnchanged:true,terminal:{ocean:5,done:true,running:false,logLength:2},
+    undo:true,redo:true,repeatedUnchanged:true,
+  });
+});
